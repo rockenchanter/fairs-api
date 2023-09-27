@@ -1,0 +1,21 @@
+{
+    "en": {
+        "email_taken": "Email already taken",
+        "invalid_email": "Invalid email format",
+        "invalid_credentials": "Incorrect email or password",
+        "too_short": "Minimum length: {}",
+        "too_long": "Maximum length: {}",
+        "too_small": "Minimum value: {}",
+        "too_big": "Maximum value: {}"
+    },
+
+    "pl": {
+        "email_taken": "Adres email jest zajęty",
+        "invalid_email": "Niepoprawny adres email",
+        "invalid_credentials": "Nieprawidłowy adres email lub hasło",
+        "too_short": "Wymagana długość tekstu: {}",
+        "too_long": "Maksymalna długość tekstu: {}",
+        "too_small": "Wartość minimalna: {}",
+        "too_big": "Wartość maksymalna: {}"
+    }
+}
