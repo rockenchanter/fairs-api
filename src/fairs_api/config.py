@@ -7,7 +7,7 @@ class Config:
 
 
 class TestConfig(Config):
-    pass
+    DEBUG = True
 
 
 class DevelopmentConfig(Config):

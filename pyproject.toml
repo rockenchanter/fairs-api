@@ -27,7 +27,7 @@ dependencies = [
     "Flask-SQLAlchemy",
     "alembic",
     "Flask",
-    "pytest",
+    "regex",
     "psycopg[binary]"
 ]
 

@@ -1,13 +1,55 @@
 from flask_sqlalchemy import SQLAlchemy
 from typing_extensions import Annotated
 from typing import List, Optional
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, DeclarativeBase
 from sqlalchemy.ext.associationproxy import association_proxy, AssociationProxy
 from sqlalchemy import func, Column, ForeignKey
 import datetime
 import enum
 
-db = SQLAlchemy()
+from . import validations as va
+
+
+class Base(DeclarativeBase):
+    @property
+    def errors(self):
+        return self._errors
+
+    def localize_errors(self, locale: str = "en") -> dict:
+        errors = {}
+
+        for key, error_list in self._errors.items():
+            data = error_list[0]
+            errors[key] = va.get_from_locale(data[0], locale).format(*data[1:])
+
+            # return only one error for each field uncomment lines below and
+            # comment above ones if you want to return all errors
+
+            # errors[key] = [
+            #         va.get_from_locale(data[0], locale).format(*data[1:])
+            #         for data in error_list
+            #     ]
+        return errors
+
+    def add_errors_or_skip(self, field: str, error_msgs: list):
+        for error in error_msgs:
+            if error is not None:
+                if field not in self._errors.keys():
+                    self._errors[field] = []
+                # no need for duplicates
+                if error not in self._errors[field]:
+                    self._errors[field].append(error)
+
+    def is_valid(self):
+        self._errors = {}
+        self._validate()
+        return len(self._errors.keys()) == 0
+
+    def _validate(self):
+        pass
+
+
+db = SQLAlchemy(model_class=Base)
 
 intpk = Annotated[int, mapped_column(primary_key=True)]
 
@@ -47,6 +89,8 @@ class DescribableMixin:
 
 class User(db.Model):
     id: Mapped[intpk]
+    name: Mapped[str]
+    surname: Mapped[str]
     role: Mapped[str]
     email: Mapped[str] = mapped_column(index=True, unique=True)
     password: Mapped[str]
@@ -64,6 +108,20 @@ class User(db.Model):
         "polymorphic_abstract": True
     }
 
+    def _validate(self) -> bool:
+        self.add_errors_or_skip("name", [va.min_length(self.name, 1)])
+        self.add_errors_or_skip("surname", [va.min_length(self.surname, 1)])
+        self.add_errors_or_skip("email", [va.email(self.email)])
+        self.add_errors_or_skip("image", [va.min_length(self.image, 1)])
+        self.add_errors_or_skip("password", [
+            va.min_length(self.password, 8),
+            va.contains(self.password, va.upc_letter, "contains_uppercase"),
+            va.contains(self.password, va.digit_regex, "contains_digit"),
+            ])
+
+    def __repr__(self):
+        return f"{self.name}, {self.surname}, {self.email}, {self.password}, {self.image}"
+
 
 class Administrator(User):
     __mapper_args__ = {
@@ -73,10 +131,10 @@ class Administrator(User):
 
 class Exhibitor(User):
     company: Mapped["Company"] = relationship(
-            back_populates="exhibitor",
-            cascade="all, delete",
-            passive_deletes=True
-            )
+        back_populates="exhibitor",
+        cascade="all, delete",
+        passive_deletes=True
+    )
 
     __mapper_args__ = {
         "polymorphic_identity": "exhibitor",
@@ -85,10 +143,10 @@ class Exhibitor(User):
 
 class Organizer(User):
     fairs: Mapped[List["Fair"]] = relationship(
-            back_populates="organizer",
-            cascade="all, delete",
-            passive_deletes=True
-            )
+        back_populates="organizer",
+        cascade="all, delete",
+        passive_deletes=True
+    )
 
     __mapper_args__ = {
         "polymorphic_identity": "organizer",
@@ -124,6 +182,13 @@ class Fair(DescribableMixin, db.Model):
         "company",
         creator=lambda company_obj: FairProxy(company=company_obj)
     )
+
+    def _validate(self):
+        self.add_errors_or_skip("name", [va.min_length(self.name, 1)])
+        self.add_errors_or_skip("image", [va.min_length(self.image, 1)])
+        self.add_errors_or_skip("description", [va.min_length(self.description, 1)])
+        self.add_errors_or_skip("start", [va.days_from_now(self.start, 30)])
+        self.add_errors_or_skip("end", [va.days_from_now(self.end, 30)])
 
 
 class Hall(DescribableMixin, db.Model):
@@ -271,7 +336,7 @@ class FairProxy(db.Model):
         ForeignKey("fair.id"), primary_key=True
     )
     stall_id: Mapped[Optional[int]] = mapped_column(
-        ForeignKey("fair.id", ondelete="CASCADE")
+        ForeignKey("stall.id", ondelete="CASCADE")
     )
     company: Mapped["Company"] = relationship(back_populates="fair_proxies")
     fair: Mapped["Fair"] = relationship(back_populates="fair_proxies")

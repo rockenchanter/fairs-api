@@ -5,12 +5,12 @@ from .models import db
 from . import config
 
 
-def create_app(mode='development'):
+def create_app(mode="development"):
     app = Flask(__name__, instance_relative_config=True)
 
-    if mode == 'development':
+    if mode == "development":
         app.config.from_object(config.DevelopmentConfig(app))
-    elif mode == 'test':
+    elif mode == "test":
         app.config.from_object(config.TestConfig())
     else:
         app.config.from_object(config.ProductionConfig())
