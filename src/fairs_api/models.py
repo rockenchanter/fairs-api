@@ -219,6 +219,15 @@ class Hall(DescribableMixin, db.Model):
         passive_deletes=True
     )
 
+    def _validate(self):
+        self.add_errors_or_skip("name", [va.min_length(self.name, 1)])
+        self.add_errors_or_skip("description", [va.min_length(self.description, 1)])
+        self.add_errors_or_skip("size", [va.min(self.size, 1)])
+        self.add_errors_or_skip("price", [va.min(self.price, 0)])
+        self.add_errors_or_skip("city", [va.min_length(self.city, 1)])
+        self.add_errors_or_skip("street", [va.min_length(self.street, 1)])
+        self.add_errors_or_skip("zipcode", [va.min_length(self.zipcode, 5)])
+
 
 class Company(DescribableMixin, db.Model):
     image: Mapped[str]
@@ -247,6 +256,11 @@ class Company(DescribableMixin, db.Model):
         creator=lambda fair_obj: FairProxy(fair=fair_obj)
     )
 
+    def _validate(self):
+        self.add_errors_or_skip("name", [va.min_length(self.name, 1)])
+        self.add_errors_or_skip("image", [va.min_length(self.image, 1)])
+        self.add_errors_or_skip("description", [va.min_length(self.description, 1)])
+
 
 class Address(db.Model):
     id: Mapped[intpk]
@@ -259,6 +273,11 @@ class Address(db.Model):
         ForeignKey("company.id", ondelete="CASCADE")
     )
     company: Mapped["Company"] = relationship(back_populates="addresses")
+
+    def _validate(self):
+        self.add_errors_or_skip("city", [va.min_length(self.city, 1)])
+        self.add_errors_or_skip("street", [va.min_length(self.street, 1)])
+        self.add_errors_or_skip("zipcode", [va.min_length(self.zipcode, 5)])
 
 
 class Industry(db.Model):
@@ -277,6 +296,11 @@ class Industry(db.Model):
         back_populates="industries"
     )
 
+    def _validate(self):
+        self.add_errors_or_skip("name", [va.min_length(self.name, 2)])
+        self.add_errors_or_skip("icon", [va.min_length(self.icon, 2)])
+        self.add_errors_or_skip("color", [va.min_length(self.color, 2)])
+
 
 class Image(db.Model):
     id: Mapped[intpk]
@@ -288,6 +312,10 @@ class Image(db.Model):
         ForeignKey("hall.id", ondelete="CASCADE")
     )
     hall: Mapped["Hall"] = relationship(back_populates="images")
+
+    def _validate(self):
+        self.add_errors_or_skip("path", [va.min_length(self.path, 1)])
+        self.add_errors_or_skip("description", [va.min_length(self.description, 1)])
 
 
 class Stall(db.Model):
@@ -310,6 +338,12 @@ class Stall(db.Model):
         cascade="all, delete",
         passive_deletes=True
     )
+
+    def _validate(self):
+        self.add_errors_or_skip("image", [va.min_length(self.image, 1)])
+        self.add_errors_or_skip("size", [va.min(self.size, 1)])
+        self.add_errors_or_skip("amount", [va.min(self.amount, 0)])
+        self.add_errors_or_skip("max_amount", [va.min(self.max_amount, 1)])
 
 
 class Notification(db.Model):

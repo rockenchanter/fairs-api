@@ -37,3 +37,36 @@ def fair_params():
         "name": "Some Fair", "description": "x", "image": "aaa",
         "start": correct_sd, "end": correct_sd
     }
+
+
+@pytest.fixture
+def company_params():
+    return {"name": "Some Fair", "description": "x", "image": "aaa"}
+
+
+@pytest.fixture
+def industry_params():
+    return {"name": "IT", "icon": "computer", "color": "blue"}
+
+
+@pytest.fixture
+def address_params():
+    return {"city": "IT", "street": "computer", "zipcode": "13333"}
+
+
+@pytest.fixture
+def image_params():
+    return {"path": "aaa", "description": "sometext"}
+
+
+@pytest.fixture
+def hall_params():
+    return {
+        "name": "aaa", "description": "sometext", "size": 50, "price": 1000,
+        "city": "IT", "street": "computer", "zipcode": "13333"
+    }
+
+
+@pytest.fixture
+def stall_params():
+    return {"size": 10, "image": "aaa", "amount": 0, "max_amount": 10}
