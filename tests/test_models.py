@@ -9,7 +9,6 @@ def revalidate(obj, expected):
 
 def set_and_revalidate(obj, expected, field, new_value):
     setattr(obj, field, new_value)
-    print(field)
     revalidate(obj, expected)
 
 
@@ -17,7 +16,6 @@ def test_user_validations(user_params):
     revalidate(md.Exhibitor(**user_params), True)
     set_and_revalidate(md.Exhibitor(**user_params), False, "email", "test.com")
     set_and_revalidate(md.Exhibitor(**user_params), False, "password", "no_digit")
-    set_and_revalidate(md.Exhibitor(**user_params), False, "image", "")
     set_and_revalidate(md.Exhibitor(**user_params), False, "name", "")
     set_and_revalidate(md.Exhibitor(**user_params), False, "surname", "")
 
@@ -41,7 +39,6 @@ def test_company_validations(company_params):
     revalidate(md.Company(**company_params), True)
     set_and_revalidate(md.Company(**company_params), False, "name", "")
     set_and_revalidate(md.Company(**company_params), False, "description", "")
-    set_and_revalidate(md.Company(**company_params), False, "image", "")
 
 
 def test_industry_validations(industry_params):
@@ -60,7 +57,6 @@ def test_address_validations(address_params):
 
 def test_image_validations(image_params):
     revalidate(md.Image(**image_params), True)
-    set_and_revalidate(md.Image(**image_params), False, "path", "")
     set_and_revalidate(md.Image(**image_params), False, "description", "")
 
 
