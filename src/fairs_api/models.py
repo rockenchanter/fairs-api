@@ -4,6 +4,7 @@ from typing import List, Optional
 from sqlalchemy.orm import Mapped, mapped_column, relationship, DeclarativeBase
 from sqlalchemy.ext.associationproxy import association_proxy, AssociationProxy
 from sqlalchemy import func, Column, ForeignKey
+from werkzeug.security import generate_password_hash
 import datetime
 import enum
 
@@ -47,6 +48,36 @@ class Base(DeclarativeBase):
 
     def _validate(self):
         pass
+
+    def serialize(self, include_relationships: bool = True) -> dict:
+        """Returns dictionary with class attributes
+
+        If class has any relationship it will include their shallow
+        representation ie. without their related objects.
+
+        """
+        props = self.__dict__.copy()
+        props.pop('_sa_instance_state')
+        props.pop('_errors', None)
+        keys_to_delete = []
+
+        # Although password is stored as hash, there's no need to send it
+        if isinstance(self, User):
+            props.pop("password", None)
+
+        for key, value in props.items():
+            if not include_relationships:
+                if isinstance(value, list | db.Model):
+                    keys_to_delete.append(key)
+            else:
+                if isinstance(value, list):
+                    props[key] = [rel.serialize(False) for rel in value]
+                if isinstance(value, db.Model):
+                    props[key] = value.serialize(False)
+        for key in keys_to_delete:
+            props.pop(key)
+
+        return props
 
 
 db = SQLAlchemy(model_class=Base)
@@ -108,19 +139,18 @@ class User(db.Model):
         "polymorphic_abstract": True
     }
 
+    def make_password_hash(self):
+        self.password = generate_password_hash(self.password)
+
     def _validate(self) -> bool:
         self.add_errors_or_skip("name", [va.min_length(self.name, 1)])
         self.add_errors_or_skip("surname", [va.min_length(self.surname, 1)])
         self.add_errors_or_skip("email", [va.email(self.email)])
-        self.add_errors_or_skip("image", [va.min_length(self.image, 1)])
         self.add_errors_or_skip("password", [
             va.min_length(self.password, 8),
             va.contains(self.password, va.upc_letter, "contains_uppercase"),
             va.contains(self.password, va.digit_regex, "contains_digit"),
             ])
-
-    def __repr__(self):
-        return f"{self.name}, {self.surname}, {self.email}, {self.password}, {self.image}"
 
 
 class Administrator(User):
@@ -185,7 +215,6 @@ class Fair(DescribableMixin, db.Model):
 
     def _validate(self):
         self.add_errors_or_skip("name", [va.min_length(self.name, 1)])
-        self.add_errors_or_skip("image", [va.min_length(self.image, 1)])
         self.add_errors_or_skip("description", [va.min_length(self.description, 1)])
         self.add_errors_or_skip("start", [va.days_from_now(self.start, 30)])
         self.add_errors_or_skip("end", [va.days_from_now(self.end, 30)])
@@ -258,7 +287,6 @@ class Company(DescribableMixin, db.Model):
 
     def _validate(self):
         self.add_errors_or_skip("name", [va.min_length(self.name, 1)])
-        self.add_errors_or_skip("image", [va.min_length(self.image, 1)])
         self.add_errors_or_skip("description", [va.min_length(self.description, 1)])
 
 
@@ -340,7 +368,6 @@ class Stall(db.Model):
     )
 
     def _validate(self):
-        self.add_errors_or_skip("image", [va.min_length(self.image, 1)])
         self.add_errors_or_skip("size", [va.min(self.size, 1)])
         self.add_errors_or_skip("amount", [va.min(self.amount, 0)])
         self.add_errors_or_skip("max_amount", [va.min(self.max_amount, 1)])
