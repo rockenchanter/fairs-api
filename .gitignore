@@ -3,3 +3,4 @@ Session.vim
 .pytest_cache/
 __pycache__/
 instance/
+tests/tmp/
