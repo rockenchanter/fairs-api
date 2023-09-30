@@ -77,10 +77,11 @@ def register():
     if user.is_valid():
         user.make_password_hash()
         try:
-            user.image = get_filename(request.files["image"])
+            user.image = get_filename(request.files["image"])[1]
             db.session.add(user)
             db.session.commit()
         except IntegrityError:
+            user.add_errors_or_skip("email", [["email_taken"]])
             db.session.rollback()
         except ValueError:
             pass
@@ -88,4 +89,5 @@ def register():
             store_file(request.files["image"], "image")
             save_user_in_session(user)
             return {"user": user.serialize(False)}, 201
-    return {"user": user.serialize(False), "errors": user.errors}, 422
+    errors = user.localize_errors(session["locale"])
+    return {"user": user.serialize(False), "errors": errors}, 422
