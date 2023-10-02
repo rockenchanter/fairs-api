@@ -9,7 +9,8 @@
         "too_big": "Maximum value: {}",
         "required": "Field can not be empty",
         "min_date": "Must take place at least {} days from now",
-        "not_found": "Resource not found"
+        "not_found": "Resource not found",
+        "contains_uppercase": "Must have at least 1 uppercase letter"
     },
 
     "pl": {
@@ -22,6 +23,7 @@
         "too_big": "Wartość maksymalna: {}",
         "required": "Pole nie może być puste",
         "min_date": "Musi nastąpić conajmniej {} dni od dziś",
-        "not_found": "Zasób nie istnieje"
+        "not_found": "Zasób nie istnieje",
+        "contains_uppercase": "Musi zawierać conajmniej 1 wielką literę"
     }
 }

@@ -18,6 +18,7 @@ def test_user_validations(user_params):
     set_and_revalidate(md.Exhibitor(**user_params), False, "password", "no_digit")
     set_and_revalidate(md.Exhibitor(**user_params), False, "name", "")
     set_and_revalidate(md.Exhibitor(**user_params), False, "surname", "")
+    set_and_revalidate(md.Exhibitor(**user_params), False, "image", "")
 
 
 def test_fair_validations(fair_params):
@@ -29,6 +30,7 @@ def test_fair_validations(fair_params):
     set_and_revalidate(md.Fair(**fair_params), False, "name", "")
     set_and_revalidate(md.Fair(**fair_params), False, "description", "")
     set_and_revalidate(md.Fair(**fair_params), False, "start", now)
+    set_and_revalidate(md.Fair(**fair_params), False, "image", "")
     set_and_revalidate(md.Fair(**fair_params), True, "end", valid_sd)
     sut.start = valid_sd
     sut.end = valid_sd - datetime.timedelta(days=1)
@@ -39,6 +41,7 @@ def test_company_validations(company_params):
     revalidate(md.Company(**company_params), True)
     set_and_revalidate(md.Company(**company_params), False, "name", "")
     set_and_revalidate(md.Company(**company_params), False, "description", "")
+    set_and_revalidate(md.Company(**company_params), False, "image", "")
 
 
 def test_industry_validations(industry_params):
@@ -58,6 +61,7 @@ def test_address_validations(address_params):
 def test_image_validations(image_params):
     revalidate(md.Image(**image_params), True)
     set_and_revalidate(md.Image(**image_params), False, "description", "")
+    set_and_revalidate(md.Image(**image_params), False, "path", "")
 
 
 def test_hall_validations(hall_params):
@@ -76,3 +80,4 @@ def test_stall_validations(stall_params):
     set_and_revalidate(md.Stall(**stall_params), False, "size", 0)
     set_and_revalidate(md.Stall(**stall_params), False, "max_amount", 0)
     set_and_revalidate(md.Stall(**stall_params), False, "amount", -1)
+    set_and_revalidate(md.Stall(**stall_params), False, "image", "")

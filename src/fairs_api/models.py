@@ -144,6 +144,7 @@ class User(db.Model):
 
     def _validate(self) -> bool:
         self.add_errors_or_skip("name", [va.min_length(self.name, 1)])
+        self.add_errors_or_skip("image", [va.min_length(self.image, 1)])
         self.add_errors_or_skip("surname", [va.min_length(self.surname, 1)])
         self.add_errors_or_skip("email", [va.email(self.email)])
         self.add_errors_or_skip("password", [
@@ -215,6 +216,7 @@ class Fair(DescribableMixin, db.Model):
 
     def _validate(self):
         self.add_errors_or_skip("name", [va.min_length(self.name, 1)])
+        self.add_errors_or_skip("image", [va.min_length(self.image, 1)])
         self.add_errors_or_skip("description", [va.min_length(self.description, 1)])
         self.add_errors_or_skip("start", [va.days_from_now(self.start, 30)])
         self.add_errors_or_skip("end", [va.days_from_now(self.end, 30)])
@@ -288,6 +290,7 @@ class Company(DescribableMixin, db.Model):
     def _validate(self):
         self.add_errors_or_skip("name", [va.min_length(self.name, 1)])
         self.add_errors_or_skip("description", [va.min_length(self.description, 1)])
+        self.add_errors_or_skip("image", [va.min_length(self.image, 1)])
 
 
 class Address(db.Model):
@@ -371,7 +374,7 @@ class Stall(db.Model):
         self.add_errors_or_skip("size", [va.min(self.size, 1)])
         self.add_errors_or_skip("amount", [va.min(self.amount, 0)])
         self.add_errors_or_skip("max_amount", [va.min(self.max_amount, 1)])
-
+        self.add_errors_or_skip("image", [va.min_length(self.image, 1)])
 
 class Notification(db.Model):
     id: Mapped[intpk]

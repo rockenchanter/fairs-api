@@ -74,17 +74,18 @@ def register():
     else:
         user = md.Organizer(**params)
 
+    if request.files["image"]:
+        user.image = get_filename(request.files["image"])[1]
+    else:
+        user.image = ""
     if user.is_valid():
         user.make_password_hash()
         try:
-            user.image = get_filename(request.files["image"])[1]
             db.session.add(user)
             db.session.commit()
         except IntegrityError:
             user.add_errors_or_skip("email", [["email_taken"]])
             db.session.rollback()
-        except ValueError:
-            pass
         else:
             store_file(request.files["image"], "image")
             save_user_in_session(user)

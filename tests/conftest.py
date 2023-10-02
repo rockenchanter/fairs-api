@@ -62,7 +62,7 @@ def runner(app):
 # model fixtures
 @pytest.fixture
 def user_params():
-    image = path.join(path.dirname(path.abspath(__file__)), "tmp/image.jpg")
+    image = path.join(path.dirname(path.abspath(__file__)), "resources/face.jpg")
     yield {
         "name": "John", "surname": "Doe", "email": "john.doe@email.com",
         "password": "Johnny1234", "role": "exhibitor",
