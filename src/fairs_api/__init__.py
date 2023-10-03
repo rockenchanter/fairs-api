@@ -8,13 +8,19 @@ from . import config
 
 def handle_400(exc):
     return {"errors": {
-        "generic": get_from_locale(exc.description, session["locale"])
+        "generic": get_from_locale("bad_request", session["locale"])
     }}, 400
+
+
+def handle_401(exc):
+    return {"errors": {
+        "generic": get_from_locale("invalid_credentials", session["locale"])
+    }}, 401
 
 
 def handle_404(exc):
     return {"errors": {
-        "generic": get_from_locale(exc.description, session["locale"])
+        "generic": get_from_locale("not_found", session["locale"])
     }}, 404
 
 
@@ -46,12 +52,6 @@ def create_app(mode="development"):
     except OSError:
         pass
 
-    try:
-        pass
-        os.makedirs(app.static_folder)
-    except OSError:
-        pass
-
     # configure session
     @app.before_request
     def set_session_defaults():
@@ -60,14 +60,18 @@ def create_app(mode="development"):
 
     # initialize Flask-SQLAlchemy
     db.init_app(app)
-    with app.app_context():
-        db.create_all()
+    if app.config["TESTING"]:
+        with app.app_context():
+            db.create_all()
 
     # register error handlers
     app.register_error_handler(400, handle_400)
+    app.register_error_handler(401, handle_401)
     app.register_error_handler(404, handle_404)
 
     # register blueprints
     from .auth_bp import bp as auth
+    from .hall_bp import bp as hall
     app.register_blueprint(auth)
+    app.register_blueprint(hall)
     return app

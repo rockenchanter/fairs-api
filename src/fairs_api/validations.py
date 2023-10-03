@@ -4,7 +4,6 @@ import datetime
 import regex as re  # better unicode support
 from os import path
 
-# SWITCH TO REGEX LIBRARY
 email_regex = re.compile(
     r"([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\"([]!#-[^-~ \t]|(\\[\t -~]))+\")@([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\[[\t -Z^-~]*])")
 digit_regex = re.compile(r"\d")

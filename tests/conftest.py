@@ -4,7 +4,6 @@ from fairs_api import create_app
 from fairs_api.models import db
 from fairs_api import models as md
 import datetime
-from os import path
 
 
 class AuthActions:
@@ -60,17 +59,16 @@ def runner(app):
 
 
 # model fixtures
-@pytest.fixture
+@pytest.fixture(scope="module")
 def user_params():
-    image = path.join(path.dirname(path.abspath(__file__)), "resources/face.jpg")
     yield {
         "name": "John", "surname": "Doe", "email": "john.doe@email.com",
         "password": "Johnny1234", "role": "exhibitor",
-        "image": (open(image, "rb"), "image.jpg", "image/jpeg")
+        "image": "dummy"
     }
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def fair_params():
     now = datetime.date.today()
     correct_sd = datetime.timedelta(days=31) + now
@@ -95,16 +93,17 @@ def address_params():
     return {"city": "IT", "street": "computer", "zipcode": "13333"}
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def image_params():
     return {"path": "aaa", "description": "sometext"}
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def hall_params():
     return {
-        "name": "aaa", "description": "sometext", "size": 50, "price": 1000,
-        "city": "IT", "street": "computer", "zipcode": "13333"
+        "name": "Arabasta", "description": "Very nice hall", "size": 500,
+        "price": 1000, "city": "Warsaw", "street": "Mickiewicza 100",
+        "zipcode": "13-333"
     }
 
 

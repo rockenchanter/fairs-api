@@ -1,5 +1,5 @@
 from flask import Blueprint, session, request
-from werkzeug.exceptions import NotFound
+from werkzeug.exceptions import Unauthorized
 from werkzeug.security import check_password_hash
 from sqlalchemy.exc import IntegrityError
 
@@ -46,7 +46,7 @@ def login():
         save_user_in_session(user)
         return {"user": user.serialize(False)}
     else:
-        raise NotFound("invalid_credentials")
+        raise Unauthorized
 
 
 @bp.get("/logout")
