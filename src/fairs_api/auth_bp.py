@@ -41,8 +41,9 @@ def register_params():
 def login():
     params = login_params()
     stmt = db.select(md.User).where(md.User.email == params["email"])
-    user = db.one_or_404(stmt, description="invalid_credentials")
-    if check_password_hash(user.password, params["password"]):
+    user = db.session.scalar(stmt)
+    if user is not None and check_password_hash(
+            user.password, params["password"]):
         save_user_in_session(user)
         return {"user": user.serialize(False)}
     else:

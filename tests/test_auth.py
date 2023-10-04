@@ -3,16 +3,18 @@ import json
 from os import path
 
 
-def test_login_with_valid_credentials(client, seed_db):
+def test_login_with_valid_credentials(auth, client, user_params, seed):
     with client:
         response = client.post("/login", data={
-            "email": "john.doe@email.com", "password": "Johnny1234"
+            "email": user_params["email"],
+            "password": user_params["password"]
         })
         data = json.loads(response.data)
 
         assert response.status_code == 200
         assert "user" in data
         assert "user_id" in session
+    auth.logout()
 
 
 def test_login_with_invalid_credentials(client):
@@ -37,8 +39,8 @@ def test_logout(client, auth):
         assert "user_in" not in session
 
 
-def test_authenticate(client, auth):
-    auth.login("john.doe@email.com", "Johnny1234")
+def test_authenticate(client, auth, user_params):
+    auth.login(user_params["email"], user_params["password"])
     with client:
         response = client.get("/authenticate", query_string={"locale": "pl"})
         data = json.loads(response.data)
@@ -47,6 +49,7 @@ def test_authenticate(client, auth):
         assert "user" in data
         assert "user_id" in session
         assert session["locale"] == "pl"
+    auth.logout()
 
 
 def test_register_with_taken_email(client, user_params):
