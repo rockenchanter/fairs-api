@@ -1,5 +1,5 @@
-from flask import Blueprint, request
-from werkzeug.exceptions import NotFound
+from flask import Blueprint, request, session
+from werkzeug.exceptions import NotFound, Forbidden
 from sqlalchemy.orm import contains_eager
 from sqlalchemy import and_
 
@@ -51,3 +51,11 @@ def show(id: int):
             raise NotFound
         else:
             return {"hall": hall.serialize()}, 200
+
+
+@bp.delete("/<int:id>")
+def destroy(id: int):
+    if session.get("user_role", None) != "administrator":
+        raise Forbidden
+    db.session.execute(db.delete(Hall).filter(Hall.id == id))
+    return {}, 200

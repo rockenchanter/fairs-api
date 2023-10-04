@@ -23,7 +23,6 @@ class DevelopmentConfig(TestConfig):
         super().__init__(app)
         path = os.path.join(app.instance_path, "development.db")
         Config.SQLALCHEMY_DATABASE_URI = "sqlite:///" + path
-        TestConfig.TESTING = False
 
 
 class ProductionConfig(Config):

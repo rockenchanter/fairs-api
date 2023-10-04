@@ -1,6 +1,6 @@
 import pytest
 import datetime
-from werkzeug.security import generate_password_hash
+from datetime import date
 
 from fairs_api import create_app
 from fairs_api import models as md
@@ -49,7 +49,8 @@ def runner(app):
 
 
 @pytest.fixture(scope="module")
-def seed(app, user_params):
+def seed(app, user_params, hall_params, fair_params, stall_params,
+         image_params):
     users = [
         md.Exhibitor(**user_params),
         md.Organizer(**user_params),
@@ -62,8 +63,33 @@ def seed(app, user_params):
     users[2].role = "administrator"
     users[2].email = "jack@email.com"
 
+    halls = [
+        md.Hall(**hall_params), md.Hall(**hall_params), md.Hall(**hall_params),
+        md.Hall(**hall_params), md.Hall(**hall_params)
+    ]
+    fairs = [
+        md.Fair(**fair_params), md.Fair(**fair_params), md.Fair(**fair_params),
+        md.Fair(**fair_params), md.Fair(**fair_params)
+    ]
+    halls[0].parking = True
+    halls[0].internet = True
+    halls[1].internet = True
+    halls[2].dissablitity = True
+    halls[3].pets = True
+
+    day = 1
+    for i in range(len(fairs)):
+        fairs[i].start = date(2023, 1, day)
+        day += 4
+        fairs[i].end = date(2023, 1, day)
+        day += 1
+        halls[i].fairs.append(fairs[i])
+        halls[i].images.append(md.Image(**image_params))
+        fairs[i].organizer = users[1]
+
     with app.app_context():
         md.db.session.add_all(users)
+        md.db.session.add_all(halls)
         md.db.session.commit()
 
 
