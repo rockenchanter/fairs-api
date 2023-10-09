@@ -85,3 +85,34 @@ def test_create_with_invalid_data(auth, client, hall_params):
 
     assert response.status_code == 422
     assert len(data["errors"]["hall"]["size"]) > 0
+
+
+def test_update_with_valid_data(auth, client, hall_params):
+    auth.login("jack@email.com", "Test1234")
+    cp = hall_params.copy()
+    cp["size"] = 9999
+    cp["name"] = "A new name"
+    response = client.put("/halls/4", data=cp)
+
+    assert response.status_code == 204
+
+
+def test_update_with_valid_data_without_permission(auth, client, hall_params):
+    auth.login("jane@email.com", "Test1234")
+    cp = hall_params.copy()
+    cp["size"] = 9999
+    cp["name"] = "A new name"
+    response = client.put("/halls/4", data=cp)
+
+    assert response.status_code == 403
+
+
+def test_update_with_invalid_data(auth, client, hall_params):
+    auth.login("jack@email.com", "Test1234")
+    cp = hall_params.copy()
+    cp["size"] = -9999
+    response = client.put("/halls/4", data=cp)
+    data = json.loads(response.data)
+
+    assert response.status_code == 422
+    assert len(data["errors"]["hall"]["size"]) > 0

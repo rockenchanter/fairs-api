@@ -1,7 +1,7 @@
 from flask import Blueprint, request, session
 from werkzeug.exceptions import NotFound, Forbidden
 from sqlalchemy.orm import contains_eager
-from sqlalchemy import and_
+from sqlalchemy import and_, update
 
 from .models import Hall, Fair, db
 from .utils import get_checkbox, get_int, get_str
@@ -91,5 +91,21 @@ def new():
         db.session.add(hall)
         db.session.commit()
         return {}, 201
+    else:
+        return {"errors": {"hall": hall.errors}}, 422
+
+
+@bp.put("/<int:id>")
+def _update(id: int):
+    if session.get("user_role", None) != "administrator":
+        raise Forbidden
+    hp = hall_params()
+    hp["id"] = request.form.get("id", 0)
+    stmt = update(Hall).filter(Hall.id == hp["id"]).values(**hp)
+
+    hall = Hall(**hp)
+    if hall.is_valid():
+        db.session.execute(stmt)
+        return {}, 204
     else:
         return {"errors": {"hall": hall.errors}}, 422
