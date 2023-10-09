@@ -4,14 +4,32 @@ from sqlalchemy.orm import contains_eager
 from sqlalchemy import and_
 
 from .models import Hall, Fair, db
+from .utils import get_checkbox, get_int, get_str
 
 
 bp = Blueprint("hall", __name__, url_prefix="/halls")
 
 
+def hall_params():
+    return {
+            "name": get_str("name"),
+            "price": get_int("price", 0),
+            "street": get_str("name"),
+            "zipcode": get_str("name"),
+            "city": get_str("name"),
+            "description": get_str("name"),
+            "parking": get_checkbox("parking"),
+            "internet": get_checkbox("internet"),
+            "dissability": get_checkbox("dissability"),
+            "pets": get_checkbox("pets"),
+            "public": get_checkbox("public"),
+            "size": get_int("size", 0),
+            }
+
+
 @bp.get("/")
 def index():
-    select = db.select(Hall).join(Hall.images).options(
+    select = db.select(Hall).join(Hall.images).filter(Hall.public).options(
             contains_eager(Hall.images))
 
     if (name_arg := request.args.get("name", None)) is not None:
@@ -32,8 +50,8 @@ def index():
 
     if s is not None and e is not None:
         select = select.filter(
-            ~Hall.fairs.any(and_(s <= Fair.end, e >= Fair.start))
-        )
+                ~Hall.fairs.any(and_(s <= Fair.end, e >= Fair.start))
+                )
 
     with db.session() as session:
         halls = session.scalars(select).unique().all()
@@ -58,4 +76,20 @@ def destroy(id: int):
     if session.get("user_role", None) != "administrator":
         raise Forbidden
     db.session.execute(db.delete(Hall).filter(Hall.id == id))
+    # TODO: remove associated files from disk
     return {}, 200
+
+
+@bp.post("/create")
+def new():
+    if session.get("user_role", None) != "administrator":
+        raise Forbidden
+    hp = hall_params()
+    hall = Hall(**hp)
+
+    if hall.is_valid():
+        db.session.add(hall)
+        db.session.commit()
+        return {}, 201
+    else:
+        return {"errors": {"hall": hall.errors}}, 422

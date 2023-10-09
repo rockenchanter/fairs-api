@@ -138,7 +138,7 @@ def hall_params():
     return {
         "name": "Arabasta", "description": "Very nice hall", "size": 500,
         "price": 1000, "city": "Warsaw", "street": "Mickiewicza 100",
-        "zipcode": "13-333"
+        "zipcode": "13-333", "public": True
     }
 
 

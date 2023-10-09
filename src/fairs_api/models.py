@@ -228,6 +228,7 @@ class Hall(DescribableMixin, db.Model):
     internet: Mapped[bool] = mapped_column(default=False)
     dissability: Mapped[bool] = mapped_column(default=False)
     pets: Mapped[bool] = mapped_column(default=False)
+    public: Mapped[bool] = mapped_column(default=False)
     price: Mapped[float]
     city: Mapped[str]
     street: Mapped[str]
@@ -375,6 +376,7 @@ class Stall(db.Model):
         self.add_errors_or_skip("amount", [va.min(self.amount, 0)])
         self.add_errors_or_skip("max_amount", [va.min(self.max_amount, 1)])
         self.add_errors_or_skip("image", [va.min_length(self.image, 1)])
+
 
 class Notification(db.Model):
     id: Mapped[intpk]

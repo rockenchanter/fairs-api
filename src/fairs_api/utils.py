@@ -1,5 +1,5 @@
 from werkzeug.datastructures import FileStorage
-from flask import current_app
+from flask import current_app, request
 import os
 
 
@@ -23,3 +23,15 @@ def store_file(file: FileStorage, mimetype_frag: str) -> None:
     fn = get_filename(file)[0]
     fn = os.path.join(assets_dir, fn)
     file.save(fn)
+
+
+def get_checkbox(key: str) -> bool:
+    return request.form.get(key, "").lower() == "true"
+
+
+def get_int(key: str, default: int) -> int:
+    return int(request.form.get(key, default))
+
+
+def get_str(key: str) -> str:
+    return request.form.get(key, "").strip()

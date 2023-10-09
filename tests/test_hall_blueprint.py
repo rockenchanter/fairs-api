@@ -58,3 +58,30 @@ def test_delete_with_existing_hall_without_permissions(
     response = client.delete("/halls/5")
 
     assert response.status_code == 403
+
+
+def test_create_with_valid_data(auth, client, hall_params):
+    auth.login("jack@email.com", "Test1234")
+    response = client.post("/halls/create", data=hall_params)
+    data = json.loads(response.data)
+
+    assert response.status_code == 201
+    assert "errors" not in data
+
+
+def test_create_with_valid_data_without_permissions(auth, client, hall_params):
+    auth.login("jane@email.com", "Test1234")
+    response = client.post("/halls/create", data=hall_params)
+
+    assert response.status_code == 403
+
+
+def test_create_with_invalid_data(auth, client, hall_params):
+    auth.login("jack@email.com", "Test1234")
+    cp = hall_params.copy()
+    cp["size"] = -1
+    response = client.post("/halls/create", data=cp)
+    data = json.loads(response.data)
+
+    assert response.status_code == 422
+    assert len(data["errors"]["hall"]["size"]) > 0

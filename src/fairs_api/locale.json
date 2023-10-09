@@ -11,7 +11,9 @@
         "min_date": "Must take place at least {} days from now",
         "contains_uppercase": "Must have at least 1 uppercase letter",
         "not_found": "Resource not found",
-        "bad_request": "Could not process request with specified arguments"
+        "bad_request": "Could not process request with specified arguments",
+        "required_image": "At least one image must be added",
+        "required_stall": "At least one stall must be added"
     },
 
     "pl": {
@@ -26,6 +28,8 @@
         "min_date": "Musi nastąpić conajmniej {} dni od dziś",
         "contains_uppercase": "Musi zawierać conajmniej 1 wielką literę",
         "not_found": "Zasób nie istnieje",
-        "bad_request": "Nie można przetworzyć żądania z podanymi parametrami"
+        "bad_request": "Nie można przetworzyć żądania z podanymi parametrami",
+        "required_image": "Conajmniej jedno zdjęcie musi być dodane",
+        "required_stall": "Conajmniej jedno stoisko musi być dodane"
     }
 }
