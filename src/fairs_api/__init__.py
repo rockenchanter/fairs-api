@@ -72,6 +72,8 @@ def create_app(mode="development"):
     # register blueprints
     from .auth_bp import bp as auth
     from .hall_bp import bp as hall
+    from .image_bp import bp as image
     app.register_blueprint(auth)
     app.register_blueprint(hall)
+    app.register_blueprint(image)
     return app

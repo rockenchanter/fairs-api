@@ -4,7 +4,7 @@ from sqlalchemy.orm import contains_eager
 from sqlalchemy import and_, update
 
 from .models import Hall, Fair, db
-from .utils import get_checkbox, get_int, get_str, delete_file
+from .utils import get_checkbox, get_int, get_str, delete_file, check_role
 
 
 bp = Blueprint("hall", __name__, url_prefix="/halls")
@@ -73,8 +73,7 @@ def show(id: int):
 
 @bp.delete("/<int:id>")
 def destroy(id: int):
-    if session.get("user_role", None) != "administrator":
-        raise Forbidden
+    check_role("administrator")
 
     select = db.select(Hall).join(Hall.images).filter(Hall.id == id).options(
             contains_eager(Hall.images))
@@ -88,8 +87,7 @@ def destroy(id: int):
 
 @bp.post("/create")
 def new():
-    if session.get("user_role", None) != "administrator":
-        raise Forbidden
+    check_role("administrator")
     hp = hall_params()
     hall = Hall(**hp)
 
@@ -103,8 +101,7 @@ def new():
 
 @bp.put("/<int:id>")
 def _update(id: int):
-    if session.get("user_role", None) != "administrator":
-        raise Forbidden
+    check_role("administrator")
     hp = hall_params()
     hp["id"] = request.form.get("id", 0)
     stmt = update(Hall).filter(Hall.id == hp["id"]).values(**hp)
