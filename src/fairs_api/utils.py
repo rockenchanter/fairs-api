@@ -25,6 +25,13 @@ def store_file(file: FileStorage, mimetype_frag: str) -> None:
     file.save(fn)
 
 
+def delete_file(path: str) -> None:
+    full_path = os.path.join(current_app.config["ASSETS_DIR"], path)
+    print(f"Deleting file at {full_path}")
+    if os.path.exists(full_path):
+        os.remove(full_path)
+
+
 def get_checkbox(key: str) -> bool:
     return request.form.get(key, "").lower() == "true"
 

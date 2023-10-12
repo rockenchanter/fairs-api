@@ -4,7 +4,7 @@ from sqlalchemy.orm import contains_eager
 from sqlalchemy import and_, update
 
 from .models import Hall, Fair, db
-from .utils import get_checkbox, get_int, get_str
+from .utils import get_checkbox, get_int, get_str, delete_file
 
 
 bp = Blueprint("hall", __name__, url_prefix="/halls")
@@ -75,8 +75,14 @@ def show(id: int):
 def destroy(id: int):
     if session.get("user_role", None) != "administrator":
         raise Forbidden
-    db.session.execute(db.delete(Hall).filter(Hall.id == id))
-    # TODO: remove associated files from disk
+
+    select = db.select(Hall).join(Hall.images).filter(Hall.id == id).options(
+            contains_eager(Hall.images))
+    hall = db.session.scalar(select)
+    if hall:
+        for img in hall.images:
+            delete_file(img.path)
+        db.session.execute(db.delete(Hall).filter(Hall.id == id))
     return {}, 200
 
 
