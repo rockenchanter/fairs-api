@@ -32,6 +32,7 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('description', sa.String(), nullable=False),
+    sa.Column('size', sa.Float(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('fair',
@@ -39,8 +40,8 @@ def upgrade() -> None:
     sa.Column('end', sa.DateTime(), nullable=False),
     sa.Column('image', sa.String(), nullable=False),
     sa.Column('published', sa.Boolean(), nullable=False),
-    sa.Column('organizer_id', sa.Integer(), nullable=True),
-    sa.Column('hall_id', sa.Integer(), nullable=True),
+    sa.Column('organizer_id', sa.Integer(), nullable=False),
+    sa.Column('hall_id', sa.Integer(), nullable=False),
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('description', sa.String(), nullable=False),

@@ -1,9 +1,12 @@
 from flask import Flask, session
+from flask_migrate import Migrate
 import os
 
 from .models import db
 from .validations import get_from_locale
 from . import config
+
+migrate = Migrate(db=db)
 
 
 def handle_400(exc):
@@ -60,9 +63,7 @@ def create_app(mode="development"):
 
     # initialize Flask-SQLAlchemy
     db.init_app(app)
-    if app.config["TESTING"]:
-        with app.app_context():
-            db.create_all()
+    migrate.init_app(app)
 
     # register error handlers
     app.register_error_handler(400, handle_400)
@@ -76,5 +77,6 @@ def create_app(mode="development"):
     from .stall_bp import bp as stall
     app.register_blueprint(auth)
     app.register_blueprint(hall)
+    app.register_blueprint(image)
     app.register_blueprint(stall)
     return app

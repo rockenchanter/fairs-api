@@ -25,7 +25,7 @@ classifiers = [
 dependencies = [
     "Flask",
     "Flask-SQLAlchemy",
-    "alembic",
+    "Flask-Migrate",
     "regex",
     "psycopg[binary]"
 ]
