@@ -41,6 +41,10 @@ def get_int(key: str, default: int) -> int:
     return int(request.form.get(key, default))
 
 
+def get_float(key: str, default: float) -> float:
+    return float(request.form.get(key, default))
+
+
 def get_str(key: str) -> str:
     return request.form.get(key, "").strip()
 
