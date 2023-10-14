@@ -98,6 +98,14 @@ def create_image(app, image_params):
 
 
 @pytest.fixture()
+def create_stall(app, stall_params):
+    par = stall_params.copy()
+    with app.app_context():
+        md.db.session.add(md.Stall(**par))
+        md.db.session.commit()
+
+
+@pytest.fixture()
 def fair_params():
     now = datetime.date.today()
     correct_sd = datetime.timedelta(days=31) + now
@@ -138,4 +146,5 @@ def hall_params():
 
 @pytest.fixture()
 def stall_params():
-    return {"size": 10, "image": "aaa", "amount": 0, "max_amount": 10}
+    return {"size": 10, "image": "aaa", "amount": 0, "max_amount": 10,
+            "hall_id": 1}

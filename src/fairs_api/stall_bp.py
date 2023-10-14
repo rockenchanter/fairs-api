@@ -43,7 +43,7 @@ def update(id: int):
     tmp.amount = stall.amount
     tmp.max_amount = stall.max_amount
 
-    if stall and tmp.is_valid():
+    if tmp.is_valid() and stall:
         ut.delete_file(stall.image)
         ut.store_file(request.files["image"], "image")
         stmt = db.update(Stall).where(Stall.id == id).values(sp)

@@ -1,8 +1,12 @@
 from os import path
+import pytest
+
+pytestmark = pytest.mark.usefixtures("clean_db")
 
 
-def test_create(auth, client, stall_params, seed):
-    auth.login("jack@email.com", "Test1234")
+def test_create(auth, client, stall_params, create_user):
+    data = create_user({"role": "administrator"})
+    auth.login(data["email"], data["password"])
     dt = stall_params.copy()
     stall = path.join(path.dirname(path.abspath(__file__)),
                       "resources/hall_img.jpg")
@@ -13,7 +17,9 @@ def test_create(auth, client, stall_params, seed):
     assert response.status_code == 201
 
 
-def test_update(auth, client, stall_params, seed):
+def test_update(auth, client, stall_params, create_user, create_stall):
+    data = create_user({"role": "administrator"})
+    auth.login(data["email"], data["password"])
     auth.login("jack@email.com", "Test1234")
     dt = stall_params.copy()
     stall = path.join(path.dirname(path.abspath(__file__)),
@@ -25,7 +31,9 @@ def test_update(auth, client, stall_params, seed):
     assert response.status_code == 204
 
 
-def test_destroy(auth, client, seed):
+def test_destroy(auth, client, create_user, create_stall):
+    data = create_user({"role": "administrator"})
+    auth.login(data["email"], data["password"])
     auth.login("jack@email.com", "Test1234")
     response = client.delete("/stalls/1")
     assert response.status_code == 200
