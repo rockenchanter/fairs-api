@@ -32,7 +32,7 @@ def update(id: int):
     ut.check_role("administrator")
     im = db.session.get(Image, id)
     tmp = Image(**image_params())
-    if im and tmp.is_valid():
+    if tmp.is_valid() and im:
         ut.delete_file(im.path)
         ut.store_file(request.files["path"], "image")
         stmt = db.update(Image).where(Image.id == id).values(**image_params())

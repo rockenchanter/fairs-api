@@ -32,23 +32,23 @@ def auth(client):
     return AuthActions(client)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def app():
     app = create_app("test")
     return app
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def client(app):
     return app.test_client()
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def runner(app):
     return app.test_cli_runner()
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture()
 def clean_db(app):
     meta = md.db.metadata
     with app.app_context():
@@ -90,6 +90,14 @@ def create_user(app, user_params):
 
 
 @pytest.fixture()
+def create_image(app, image_params):
+    par = image_params.copy()
+    with app.app_context():
+        md.db.session.add(md.Image(**par))
+        md.db.session.commit()
+
+
+@pytest.fixture()
 def fair_params():
     now = datetime.date.today()
     correct_sd = datetime.timedelta(days=31) + now
@@ -116,7 +124,7 @@ def address_params():
 
 @pytest.fixture()
 def image_params():
-    return {"path": "aaa", "description": "sometext"}
+    return {"path": "aaa", "description": "sometext", "hall_id": 1}
 
 
 @pytest.fixture()
