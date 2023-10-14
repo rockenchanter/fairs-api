@@ -32,6 +32,11 @@ def auth(client):
     return AuthActions(client)
 
 
+@pytest.fixture(autouse=True)
+def logout(auth):
+    auth.logout()
+
+
 @pytest.fixture(scope="module")
 def app():
     app = create_app("test")
@@ -102,6 +107,14 @@ def create_stall(app, stall_params):
     par = stall_params.copy()
     with app.app_context():
         md.db.session.add(md.Stall(**par))
+        md.db.session.commit()
+
+
+@pytest.fixture()
+def create_hall(app, hall_params):
+    par = hall_params.copy()
+    with app.app_context():
+        md.db.session.add(md.Hall(**par))
         md.db.session.commit()
 
 

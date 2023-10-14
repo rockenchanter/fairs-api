@@ -1,5 +1,5 @@
-from flask import Blueprint, request, session
-from werkzeug.exceptions import NotFound, Forbidden
+from flask import Blueprint, request
+from werkzeug.exceptions import NotFound
 from sqlalchemy.orm import contains_eager
 from sqlalchemy import and_, update
 
@@ -29,8 +29,11 @@ def hall_params():
 
 @bp.get("/")
 def index():
-    select = db.select(Hall).join(Hall.images).filter(Hall.public).options(
-            contains_eager(Hall.images))
+    select = db.select(Hall).outerjoin(Hall.images).outerjoin(
+            Hall.fairs).filter(Hall.public).options(
+                contains_eager(Hall.images),
+                contains_eager(Hall.fairs),
+                )
 
     if (name_arg := request.args.get("name", None)) is not None:
         select = select.filter(Hall.name.like(f"%{name_arg}"))
@@ -60,8 +63,12 @@ def index():
 
 @bp.get("/<int:id>")
 def show(id: int):
-    select = db.select(Hall).join(Hall.images).outerjoin(Hall.fairs).outerjoin(
-            Hall.stalls).filter(Hall.id == id)
+    select = db.select(Hall).outerjoin(Hall.images).outerjoin(
+            Hall.fairs).outerjoin(Hall.stalls).filter(
+                Hall.id == id).options(
+                    contains_eager(Hall.images),
+                    contains_eager(Hall.fairs),
+                    contains_eager(Hall.stalls))
 
     with db.session() as session:
         hall = session.scalars(select).unique().first()
@@ -75,12 +82,19 @@ def show(id: int):
 def destroy(id: int):
     check_role("administrator")
 
-    select = db.select(Hall).join(Hall.images).filter(Hall.id == id).options(
-            contains_eager(Hall.images))
+    select = db.select(Hall).outerjoin(Hall.images).outerjoin(
+            Hall.stalls).outerjoin(Hall.fairs).filter(Hall.id == id).options(
+                contains_eager(Hall.images),
+                contains_eager(Hall.fairs),
+                contains_eager(Hall.stalls))
     hall = db.session.scalar(select)
     if hall:
-        for img in hall.images:
-            delete_file(img.path)
+        for obj in hall.images:
+            delete_file(obj.path)
+        for obj in hall.stalls:
+            delete_file(obj.image)
+        for obj in hall.stalls:
+            delete_file(obj.image)
         db.session.execute(db.delete(Hall).filter(Hall.id == id))
     return {}, 200
 

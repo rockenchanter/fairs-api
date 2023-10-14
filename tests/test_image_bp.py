@@ -1,7 +1,7 @@
 from os import path
 import pytest
 
-pytestmark = pytest.mark.usefixtures("clean_db", "create_user", "create_image")
+pytestmark = pytest.mark.usefixtures("clean_db", "create_image")
 
 
 def test_create(auth, client, create_user, image_params):

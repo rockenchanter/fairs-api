@@ -49,7 +49,6 @@ def update(id: int):
         stmt = db.update(Stall).where(Stall.id == id).values(sp)
         db.session.execute(stmt)
         return {}, 204
-    print(tmp.errors)
     return {"errors": {"stall": tmp.errors}}, 422
 
 
