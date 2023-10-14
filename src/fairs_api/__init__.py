@@ -1,5 +1,5 @@
 from flask import Flask, session
-from flask_migrate import Migrate
+from flask_migrate import Migrate, upgrade
 import os
 
 from .models import db
@@ -64,6 +64,8 @@ def create_app(mode="development"):
     # initialize Flask-SQLAlchemy
     db.init_app(app)
     migrate.init_app(app)
+    with app.app_context():
+        upgrade()
 
     # register error handlers
     app.register_error_handler(400, handle_400)

@@ -1,13 +1,17 @@
 from flask import session
 import json
+import pytest
 from os import path
 
+pytestmark = pytest.mark.usefixtures("clean_db")
 
-def test_login_with_valid_credentials(auth, client, user_params, seed):
+
+def test_login_with_valid_credentials(auth, client, create_user):
+    data = create_user({"role": "exhibitor"})
     with client:
         response = client.post("/login", data={
-            "email": user_params["email"],
-            "password": user_params["password"]
+            "email": data["email"],
+            "password": data["password"]
         })
         data = json.loads(response.data)
 
@@ -30,8 +34,9 @@ def test_login_with_invalid_credentials(client):
         assert "user_id" not in session
 
 
-def test_logout(client, auth):
-    auth.login("john.doe@email.com", "Johnny12345")
+def test_logout(client, auth, create_user):
+    data = create_user({"role": "exhibitor"})
+    auth.login(data["email"], data["password"])
     with client:
         response = client.get("/logout")
 
@@ -39,8 +44,9 @@ def test_logout(client, auth):
         assert "user_in" not in session
 
 
-def test_authenticate(client, auth, user_params):
-    auth.login(user_params["email"], user_params["password"])
+def test_authenticate(client, auth, create_user):
+    data = create_user({"role": "exhibitor"})
+    auth.login(data["email"], data["password"])
     with client:
         response = client.get("/authenticate", query_string={"locale": "pl"})
         data = json.loads(response.data)
@@ -52,9 +58,10 @@ def test_authenticate(client, auth, user_params):
     auth.logout()
 
 
-def test_register_with_taken_email(client, user_params):
+def test_register_with_taken_email(client, auth, create_user):
+    data = create_user({"role": "exhibitor"})
     with client:
-        dat = user_params.copy()
+        dat = data.copy()
         image = path.join(path.dirname(path.abspath(__file__)),
                           "resources/face.jpg")
         dat["image"] = (open(image, "rb"), "image.jpg", "image/jpeg")

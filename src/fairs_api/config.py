@@ -15,6 +15,8 @@ class TestConfig(Config):
 
     def __init__(self, app):
         super().__init__(app)
+        path = os.path.join(app.instance_path, "test.db")
+        Config.SQLALCHEMY_DATABASE_URI = "sqlite:///" + path
 
 
 class DevelopmentConfig(TestConfig):

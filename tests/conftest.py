@@ -1,6 +1,6 @@
 import pytest
 import datetime
-from datetime import date
+from werkzeug.security import generate_password_hash
 
 from fairs_api import create_app
 from fairs_api import models as md
@@ -32,69 +32,33 @@ def auth(client):
     return AuthActions(client)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def app():
     app = create_app("test")
     return app
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def client(app):
     return app.test_client()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def runner(app):
     return app.test_cli_runner()
 
 
-@pytest.fixture(scope="module")
-def seed(app, user_params, hall_params, fair_params, stall_params,
-         image_params):
-    users = [
-        md.Exhibitor(**user_params),
-        md.Organizer(**user_params),
-        md.Administrator(**user_params)
-    ]
-    for us in users:
-        us.make_password_hash()
-    users[1].email = "jane@email.com"
-    users[1].role = "organizer"
-    users[2].role = "administrator"
-    users[2].email = "jack@email.com"
-
-    halls = [
-        md.Hall(**hall_params), md.Hall(**hall_params), md.Hall(**hall_params),
-        md.Hall(**hall_params), md.Hall(**hall_params)
-    ]
-    fairs = [
-        md.Fair(**fair_params), md.Fair(**fair_params), md.Fair(**fair_params),
-        md.Fair(**fair_params), md.Fair(**fair_params)
-    ]
-    halls[0].parking = True
-    halls[0].internet = True
-    halls[1].internet = True
-    halls[2].dissablitity = True
-    halls[3].pets = True
-
-    day = 1
-    for i in range(len(fairs)):
-        fairs[i].start = date(2023, 1, day)
-        day += 4
-        fairs[i].end = date(2023, 1, day)
-        day += 1
-        halls[i].fairs.append(fairs[i])
-        halls[i].images.append(md.Image(**image_params))
-        fairs[i].organizer = users[1]
-
+@pytest.fixture(autouse=True)
+def clean_db(app):
+    meta = md.db.metadata
     with app.app_context():
-        md.db.session.add_all(users)
-        md.db.session.add_all(halls)
+        for table in reversed(meta.sorted_tables):
+            md.db.session.execute(table.delete())
         md.db.session.commit()
 
 
 # model fixtures
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def user_params():
     return {
         "name": "John", "surname": "Doe", "email": "john.doe@email.com",
@@ -103,7 +67,29 @@ def user_params():
     }
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
+def create_user(app, user_params):
+    par = user_params.copy()
+
+    def _create_user(alter_params):
+        par.update(alter_params)
+        if par["role"] == "exhibitor":
+            obj = md.Exhibitor(**par)
+        elif par["role"] == "organizer":
+            obj = md.Organizer(**par)
+        elif par["role"] == "administrator":
+            obj = md.Administrator(**par)
+
+        obj.password = generate_password_hash(obj.password)
+        with app.app_context():
+            md.db.session.add(obj)
+            md.db.session.commit()
+        return par
+
+    return _create_user
+
+
+@pytest.fixture()
 def fair_params():
     now = datetime.date.today()
     correct_sd = datetime.timedelta(days=31) + now
@@ -113,27 +99,27 @@ def fair_params():
     }
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def company_params():
     return {"name": "Some Fair", "description": "x", "image": "aaa"}
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def industry_params():
     return {"name": "IT", "icon": "computer", "color": "blue"}
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def address_params():
     return {"city": "IT", "street": "computer", "zipcode": "13333"}
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def image_params():
     return {"path": "aaa", "description": "sometext"}
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def hall_params():
     return {
         "name": "Arabasta", "description": "Very nice hall", "size": 500,
@@ -142,6 +128,6 @@ def hall_params():
     }
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def stall_params():
     return {"size": 10, "image": "aaa", "amount": 0, "max_amount": 10}
