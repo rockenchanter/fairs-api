@@ -4,9 +4,8 @@ import os
 class Config:
     SECRET_KEY = 'test'
     SQLALCHEMY_DATABASE_URI = 'sqlite:///'  # in memory db will do for tests
-
-    def __init__(self, app):
-        Config.ASSETS_DIR = os.path.join(app.instance_path, "assets/")
+    ADMIN_EMAIL = 'admin@example.com'
+    ADMIN_PASSWORD = 'root'
 
 
 class TestConfig(Config):
@@ -14,9 +13,9 @@ class TestConfig(Config):
     TESTING = True
 
     def __init__(self, app):
-        super().__init__(app)
         path = os.path.join(app.instance_path, "test.db")
         Config.SQLALCHEMY_DATABASE_URI = "sqlite:///" + path
+        Config.ASSETS_DIR = os.path.join(app.instance_path, "assets/tests/")
 
 
 class DevelopmentConfig(TestConfig):
@@ -25,6 +24,7 @@ class DevelopmentConfig(TestConfig):
         super().__init__(app)
         path = os.path.join(app.instance_path, "development.db")
         Config.SQLALCHEMY_DATABASE_URI = "sqlite:///" + path
+        Config.ASSETS_DIR = os.path.join(app.instance_path, "assets/")
 
 
 class ProductionConfig(Config):

@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, session
 from werkzeug.exceptions import NotFound
 from sqlalchemy.orm import contains_eager
 from sqlalchemy import and_, update
@@ -14,10 +14,10 @@ def hall_params():
     return {
             "name": get_str("name"),
             "price": get_int("price", 0),
-            "street": get_str("name"),
-            "zipcode": get_str("name"),
-            "city": get_str("name"),
-            "description": get_str("name"),
+            "street": get_str("street"),
+            "zipcode": get_str("zipcode"),
+            "city": get_str("city"),
+            "description": get_str("description"),
             "parking": get_checkbox("parking"),
             "internet": get_checkbox("internet"),
             "dissability": get_checkbox("dissability"),
@@ -30,7 +30,7 @@ def hall_params():
 @bp.get("/")
 def index():
     select = db.select(Hall).outerjoin(Hall.images).outerjoin(
-            Hall.fairs).filter(Hall.public).options(
+            Hall.fairs).options(
                 contains_eager(Hall.images),
                 contains_eager(Hall.fairs),
                 )
@@ -96,6 +96,7 @@ def destroy(id: int):
         for obj in hall.stalls:
             delete_file(obj.image)
         db.session.execute(db.delete(Hall).filter(Hall.id == id))
+        db.session.commit()
     return {}, 200
 
 
@@ -109,20 +110,22 @@ def new():
         db.session.add(hall)
         db.session.commit()
         return {}, 201
-    else:
-        return {"errors": {"hall": hall.errors}}, 422
+    errors = hall.localize_errors(session["locale"])
+    return {"hall": hall.serialize(False), "errors": errors}, 422
 
 
-@bp.put("/<int:id>")
+@bp.patch("/<int:id>")
 def _update(id: int):
     check_role("administrator")
     hp = hall_params()
-    hp["id"] = request.form.get("id", 0)
+    hp["id"] = id
     stmt = update(Hall).filter(Hall.id == hp["id"]).values(**hp)
 
     hall = Hall(**hp)
     if hall.is_valid():
         db.session.execute(stmt)
+        db.session.commit()
         return {}, 204
-    else:
-        return {"errors": {"hall": hall.errors}}, 422
+
+    errors = hall.localize_errors(session["locale"])
+    return {"hall": hall.serialize(False), "errors": errors}, 422

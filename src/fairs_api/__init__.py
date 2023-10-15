@@ -2,7 +2,7 @@ from flask import Flask, session
 from flask_migrate import Migrate, upgrade
 import os
 
-from .models import db
+from .models import db, Administrator
 from .validations import get_from_locale
 from . import config
 
@@ -25,6 +25,22 @@ def handle_404(exc):
     return {"errors": {
         "generic": get_from_locale("not_found", session["locale"])
     }}, 404
+
+
+def create_root_user(app):
+    stmt = db.select(Administrator)
+    admins = db.session.scalars(stmt).all()
+    if len(admins) == 0:
+        adm = Administrator(
+            name="Main",
+            surname="Admin",
+            email=app.config["ADMIN_EMAIL"],
+            password=app.config["ADMIN_PASSWORD"],
+            image="assets/admin.jpg"
+            )
+        adm.make_password_hash()
+        db.session.add(adm)
+        db.session.commit()
 
 
 def create_app(mode="development"):
@@ -66,6 +82,7 @@ def create_app(mode="development"):
     migrate.init_app(app)
     with app.app_context():
         upgrade()
+        create_root_user(app)
 
     # register error handlers
     app.register_error_handler(400, handle_400)
