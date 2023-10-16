@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, session
 
 from .models import Image, db
 from . import utils as ut
@@ -9,14 +9,14 @@ bp = Blueprint("image", __name__, url_prefix="/images")
 
 def image_params():
     return {
-        "path": ut.get_filename(request.files["path"])[1],
+        "path": ut.get_filename(request.files.get("path", None))[1],
         "description": ut.get_str("description"),
         "hall_id": ut.get_int("hall_id", 0)
     }
 
 
 @bp.post("/create")
-def create():
+def new():
     ut.check_role("administrator")
     im = Image(**image_params())
     if im.is_valid() and im.hall_id != 0:
@@ -24,21 +24,25 @@ def create():
         db.session.add(im)
         db.session.commit()
         return {}, 201
-    return {"errors": {"image": im.errors}}, 422
+    errors = im.localize_errors(session["locale"])
+    return {"errors": {"image": errors}}, 422
 
 
 @bp.patch("/<int:id>")
 def update(id: int):
     ut.check_role("administrator")
     im = db.session.get(Image, id)
-    tmp = Image(**image_params())
+    par = image_params()
+    par.pop("path")
+    tmp = Image(**par)
+    tmp.path = 'nothing'
     if tmp.is_valid() and im:
-        ut.delete_file(im.path)
-        ut.store_file(request.files["path"], "image")
-        stmt = db.update(Image).where(Image.id == id).values(**image_params())
+        stmt = db.update(Image).where(Image.id == id).values(**par)
         db.session.execute(stmt)
+        db.session.commit()
         return {}, 204
-    return {"errors": {"image": tmp.errors}}, 422
+    errors = im.localize_errors(session["locale"])
+    return {"errors": {"image": errors}}, 422
 
 
 @bp.delete("/<int:id>")
@@ -48,4 +52,5 @@ def destroy(id: int):
     if im:
         ut.delete_file(im.path)
         db.session.delete(im)
+        db.session.commit()
     return {}, 200

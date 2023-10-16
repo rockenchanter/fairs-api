@@ -15,7 +15,7 @@ def get_filename(file: FileStorage) -> str:
             files_in_assets += 1
             sfn = os.path.join(assets_dir, f"file_{files_in_assets}{ext}")
 
-        base = f"file_{files_in_assets + 1}{ext}"
+        base = f"file_{files_in_assets}{ext}"
         return [base, f"/{os.path.basename(os.path.normpath(assets_dir))}/{base}"]
     return [None, None]
 
