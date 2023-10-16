@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, session
 
 from .models import Stall, db
 from . import utils as ut
@@ -13,7 +13,7 @@ def stall_params():
         "electricity": ut.get_checkbox("electricity"),
         "network": ut.get_checkbox("network"),
         "support": ut.get_checkbox("support"),
-        "image": ut.get_filename(request.files["image"])[1],
+        "image": ut.get_filename(request.files.get("image", None))[1],
         "max_amount": ut.get_int("max_amount", 0),
         "hall_id": ut.get_int("hall_id", 0)
     }
@@ -29,7 +29,8 @@ def create():
         db.session.add(stall)
         db.session.commit()
         return {}, 201
-    return {"errors": {"stall": stall.errors}}, 422
+    errors = stall.localize_errors(session["locale"])
+    return {"errors": {"stall": errors}}, 422
 
 
 @bp.patch("/<int:id>")
@@ -40,16 +41,18 @@ def update(id: int):
     # amount and max amount can not be modified
     sp.pop("max_amount")
     tmp = Stall(**sp)
+    tmp.image = 'nothing'
     tmp.amount = stall.amount
     tmp.max_amount = stall.max_amount
 
     if tmp.is_valid() and stall:
-        ut.delete_file(stall.image)
-        ut.store_file(request.files["image"], "image")
+        sp.pop("image")
         stmt = db.update(Stall).where(Stall.id == id).values(sp)
         db.session.execute(stmt)
+        db.session.commit()
         return {}, 204
-    return {"errors": {"stall": tmp.errors}}, 422
+    errors = tmp.localize_errors(session["locale"])
+    return {"errors": {"stall": errors}}, 422
 
 
 @bp.delete("/<int:id>")
@@ -59,4 +62,5 @@ def destroy(id: int):
     if stall:
         ut.delete_file(stall.image)
         db.session.delete(stall)
+        db.session.commit()
     return {}, 200
