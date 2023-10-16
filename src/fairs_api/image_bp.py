@@ -50,7 +50,6 @@ def destroy(id: int):
     ut.check_role("administrator")
     im = db.session.get(Image, id)
     if im:
-        ut.delete_file(im.path)
         db.session.delete(im)
         db.session.commit()
     return {}, 200

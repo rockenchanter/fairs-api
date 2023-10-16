@@ -30,7 +30,7 @@ def store_file(file: FileStorage, mimetype_frag: str) -> None:
 
 
 def delete_file(path: str) -> None:
-    full_path = os.path.join(current_app.instance_path, path)
+    full_path = os.path.join(current_app.instance_path, path[1:])
     if os.path.exists(full_path):
         os.remove(full_path)
 

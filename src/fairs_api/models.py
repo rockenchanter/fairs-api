@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from typing_extensions import Annotated
 from typing import List, Optional
+from sqlalchemy import event
 from sqlalchemy.orm import Mapped, mapped_column, relationship, DeclarativeBase
 from sqlalchemy.ext.associationproxy import association_proxy, AssociationProxy
 from sqlalchemy import func, Column, ForeignKey
@@ -9,6 +10,7 @@ import datetime
 import enum
 
 from . import validations as va
+from .utils import delete_file
 
 
 class Base(DeclarativeBase):
@@ -49,6 +51,9 @@ class Base(DeclarativeBase):
     def _validate(self):
         pass
 
+    def __delete__(self):
+        pass
+
     def serialize(self, include_relationships: bool = True) -> dict:
         """Returns dictionary with class attributes
 
@@ -81,6 +86,7 @@ class Base(DeclarativeBase):
 
 
 db = SQLAlchemy(model_class=Base)
+
 
 intpk = Annotated[int, mapped_column(primary_key=True)]
 
@@ -153,6 +159,9 @@ class User(db.Model):
             va.contains(self.password, va.digit_regex, "contains_digit"),
             ])
 
+    def __delete__(self):
+        delete_file(self.image)
+
 
 class Administrator(User):
     __mapper_args__ = {
@@ -220,6 +229,9 @@ class Fair(DescribableMixin, db.Model):
         self.add_errors_or_skip("description", [va.min_length(self.description, 1)])
         self.add_errors_or_skip("start", [va.days_from_now(self.start, 30)])
         self.add_errors_or_skip("end", [va.days_from_now(self.end, 30)])
+
+    def __delete__(self):
+        delete_file(self.image)
 
 
 class Hall(DescribableMixin, db.Model):
@@ -349,6 +361,9 @@ class Image(db.Model):
         self.add_errors_or_skip("path", [va.min_length(self.path, 1)])
         self.add_errors_or_skip("description", [va.min_length(self.description, 1)])
 
+    def __delete__(self):
+        delete_file(self.path)
+
 
 class Stall(db.Model):
     id: Mapped[intpk]
@@ -365,6 +380,7 @@ class Stall(db.Model):
         ForeignKey("hall.id", ondelete="CASCADE")
     )
     hall: Mapped["Hall"] = relationship(back_populates="stalls")
+    # TODO:  SWITCH TO SET NULL
     proxies: Mapped[List["FairProxy"]] = relationship(
         back_populates="stall",
         cascade="all, delete",
@@ -376,6 +392,9 @@ class Stall(db.Model):
         self.add_errors_or_skip("amount", [va.min(self.amount, 0)])
         self.add_errors_or_skip("max_amount", [va.min(self.max_amount, 1)])
         self.add_errors_or_skip("image", [va.min_length(self.image, 1)])
+
+    def __delete__(self):
+        delete_file(self.image)
 
 
 class Notification(db.Model):
@@ -407,3 +426,14 @@ class FairProxy(db.Model):
     company: Mapped["Company"] = relationship(back_populates="fair_proxies")
     fair: Mapped["Fair"] = relationship(back_populates="fair_proxies")
     stall: Mapped[Optional["Stall"]] = relationship(back_populates="proxies")
+
+
+def before_delete(mapper, connection, target):
+    print(target)
+    target.__delete__()
+
+
+event.listen(Image, 'after_delete', before_delete)
+event.listen(Stall, 'after_delete', before_delete)
+event.listen(Fair,  'after_delete', before_delete)
+event.listen(User,  'after_delete', before_delete)

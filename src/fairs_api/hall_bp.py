@@ -4,7 +4,7 @@ from sqlalchemy.orm import contains_eager
 from sqlalchemy import and_, update
 
 from .models import Hall, Fair, db
-from .utils import get_checkbox, get_int, get_str, delete_file, check_role
+from .utils import get_checkbox, get_int, get_str, check_role
 
 
 bp = Blueprint("hall", __name__, url_prefix="/halls")
@@ -89,13 +89,7 @@ def destroy(id: int):
                 contains_eager(Hall.stalls))
     hall = db.session.scalar(select)
     if hall:
-        for obj in hall.images:
-            delete_file(obj.path)
-        for obj in hall.stalls:
-            delete_file(obj.image)
-        for obj in hall.stalls:
-            delete_file(obj.image)
-        db.session.execute(db.delete(Hall).filter(Hall.id == id))
+        db.session.delete(hall)
         db.session.commit()
     return {}, 200
 

@@ -60,7 +60,6 @@ def destroy(id: int):
     ut.check_role("administrator")
     stall = db.session.get(Stall, id)
     if stall:
-        ut.delete_file(stall.image)
         db.session.delete(stall)
         db.session.commit()
     return {}, 200
