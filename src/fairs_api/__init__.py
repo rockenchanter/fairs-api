@@ -94,8 +94,10 @@ def create_app(mode="development"):
     from .hall_bp import bp as hall
     from .image_bp import bp as image
     from .stall_bp import bp as stall
+    from .company_bp import bp as company
     app.register_blueprint(auth)
     app.register_blueprint(hall)
     app.register_blueprint(image)
     app.register_blueprint(stall)
+    app.register_blueprint(company)
     return app

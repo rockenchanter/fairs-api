@@ -130,7 +130,8 @@ def fair_params():
 
 @pytest.fixture()
 def company_params():
-    return {"name": "Some Fair", "description": "x", "image": "aaa"}
+    return {"name": "Some Fair", "description": "x", "image": "aaa",
+            "exhibitor_id": 1}
 
 
 @pytest.fixture()
