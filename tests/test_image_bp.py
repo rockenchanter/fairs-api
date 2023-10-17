@@ -27,7 +27,7 @@ def test_update(auth, client, image_params, create_user):
     dt["hall_id"] = 1
     dt["description"] = "new description"
     response = client.patch("/images/1", data=dt)
-    assert response.status_code == 204
+    assert response.status_code == 200
 
 
 def test_destroy(auth, client, create_user):

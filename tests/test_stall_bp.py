@@ -28,7 +28,7 @@ def test_update(auth, client, stall_params, create_user, create_stall):
     dt["hall_id"] = 1
     dt["size"] = 10
     response = client.patch("/stalls/1", data=dt)
-    assert response.status_code == 204
+    assert response.status_code == 200
 
 
 def test_destroy(auth, client, create_user, create_stall):

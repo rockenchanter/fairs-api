@@ -22,8 +22,10 @@ def new():
     if im.is_valid() and im.hall_id != 0:
         ut.store_file(request.files["path"], "image")
         db.session.add(im)
+        db.session.flush()
+        dt = im.serialize(False)
         db.session.commit()
-        return {}, 201
+        return {"image": dt}, 201
     errors = im.localize_errors(session["locale"])
     return {"errors": {"image": errors}}, 422
 
@@ -40,7 +42,7 @@ def update(id: int):
         stmt = db.update(Image).where(Image.id == id).values(**par)
         db.session.execute(stmt)
         db.session.commit()
-        return {}, 204
+        return {"image": id}, 200
     errors = im.localize_errors(session["locale"])
     return {"errors": {"image": errors}}, 422
 

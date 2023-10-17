@@ -102,8 +102,10 @@ def new():
 
     if hall.is_valid():
         db.session.add(hall)
+        db.session.flush()
+        dt = hall.serialize(False)
         db.session.commit()
-        return {}, 201
+        return {"hall": dt}, 201
     errors = hall.localize_errors(session["locale"])
     return {"hall": hall.serialize(False), "errors": errors}, 422
 
@@ -119,7 +121,7 @@ def _update(id: int):
     if hall.is_valid():
         db.session.execute(stmt)
         db.session.commit()
-        return {}, 204
+        return {"hall": id}, 200
 
     errors = hall.localize_errors(session["locale"])
     return {"hall": hall.serialize(False), "errors": errors}, 422

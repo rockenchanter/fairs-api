@@ -131,7 +131,7 @@ def test_update_with_valid_data(auth, client, hall_params, create_user):
     cp["name"] = "A new name"
     response = client.patch("/halls/4", data=cp)
 
-    assert response.status_code == 204
+    assert response.status_code == 200
 
 
 def test_update_with_valid_data_without_permission(auth, client, hall_params):

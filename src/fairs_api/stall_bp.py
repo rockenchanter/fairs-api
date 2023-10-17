@@ -27,8 +27,10 @@ def create():
     if stall.is_valid() and stall.hall_id != 0:
         ut.store_file(request.files["image"], "image")
         db.session.add(stall)
+        db.session.flush()
+        dt = stall.serialize(False)
         db.session.commit()
-        return {}, 201
+        return {"stall": dt}, 201
     errors = stall.localize_errors(session["locale"])
     return {"errors": {"stall": errors}}, 422
 
@@ -50,7 +52,7 @@ def update(id: int):
         stmt = db.update(Stall).where(Stall.id == id).values(sp)
         db.session.execute(stmt)
         db.session.commit()
-        return {}, 204
+        return {"stall": id}, 200
     errors = tmp.localize_errors(session["locale"])
     return {"errors": {"stall": errors}}, 422
 
