@@ -85,11 +85,15 @@ def create_user(app, user_params):
         elif par["role"] == "administrator":
             obj = md.Administrator(**par)
 
+        pas = obj.password
         obj.password = generate_password_hash(obj.password)
         with app.app_context():
             md.db.session.add(obj)
+            md.db.session.flush()
+            ret = obj.serialize(False)
+            ret["password"] = pas
             md.db.session.commit()
-        return par
+        return ret
 
     return _create_user
 
@@ -99,6 +103,20 @@ def create_image(app, image_params):
     par = image_params.copy()
     with app.app_context():
         md.db.session.add(md.Image(**par))
+        md.db.session.commit()
+
+
+@pytest.fixture()
+def create_address(app, address_params):
+    with app.app_context():
+        md.db.session.add(md.Address(**address_params))
+        md.db.session.commit()
+
+
+@pytest.fixture()
+def create_company(app, company_params):
+    with app.app_context():
+        md.db.session.add(md.Company(**company_params))
         md.db.session.commit()
 
 
@@ -141,7 +159,7 @@ def industry_params():
 
 @pytest.fixture()
 def address_params():
-    return {"city": "IT", "street": "computer", "zipcode": "13333"}
+    return {"city": "IT", "street": "computer", "zipcode": "13333", "company_id": 1}
 
 
 @pytest.fixture()

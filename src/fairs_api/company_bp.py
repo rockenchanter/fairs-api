@@ -63,9 +63,6 @@ def new():
 
     industries_ids = [int(x.strip()) for x in
                       request.form.get("industry", "0").split(",")]
-
-    print(industries_ids)
-
     industries = db.session.scalars(
             db.select(Industry).filter(Industry.id.in_(industries_ids))).all()
 

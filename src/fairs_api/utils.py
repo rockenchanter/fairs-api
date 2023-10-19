@@ -56,3 +56,9 @@ def get_str(key: str) -> str:
 def check_role(role: str) -> None:
     if session.get("user_role", None) != role:
         raise Forbidden
+
+
+def check_ownership(key: str) -> None:
+    id = get_int(key, -1)
+    if session.get("user_id", None) != id:
+        raise Forbidden
