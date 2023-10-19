@@ -7,15 +7,16 @@ from .models import Address, Company, Industry, db
 
 bp = Blueprint("company", __name__, url_prefix="/companies")
 _base_select = db.select(Company).outerjoin(Company.addresses).outerjoin(
-        Company.industries).options(
+        Company.industries).outerjoin(Company.exhibitor).options(
         contains_eager(Company.addresses),
         contains_eager(Company.industries),
+        contains_eager(Company.exhibitor),
     )
 
 
 def company_params():
     return {
-        "image": ut.get_filename(request.files.get("image", None)),
+        "image": ut.get_filename(request.files.get("image", None))[1],
         "name": ut.get_str("name"),
         "description": ut.get_str("description")
     }
@@ -52,3 +53,37 @@ def show(id: int):
     if res:
         return {"company": res.serialize(True)}, 200
     raise NotFound
+
+
+@bp.post("/create")
+def new():
+    ut.check_role("exhibitor")
+    cmpny = Company(**company_params())
+    addr = Address(**address_params())
+
+    industries_ids = [int(x.strip()) for x in
+                      request.form.get("industry", "0").split(",")]
+
+    print(industries_ids)
+
+    industries = db.session.scalars(
+            db.select(Industry).filter(Industry.id.in_(industries_ids))).all()
+
+    cmpny.exhibitor_id = session.get("user_id", None)
+    cmpny.addresses.append(addr)
+    for i in industries:
+        cmpny.industries.append(i)
+
+    cvalid = cmpny.is_valid()
+    avalid = addr.is_valid()
+
+    if cvalid and avalid:
+        db.session.add(cmpny)
+        ut.store_file(request.files["image"], "image")
+        db.session.flush()
+        dat = cmpny.serialize(True)
+        db.session.commit()
+        return {"company": dat}, 201
+    ce = cmpny.localize_errors(session["locale"])
+    ae = addr.localize_errors(session["locale"])
+    return {"errors": {"company": ce, "address": ae}}, 422

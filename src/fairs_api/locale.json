@@ -13,7 +13,9 @@
         "not_found": "Resource not found",
         "bad_request": "Could not process request with specified arguments",
         "required_image": "At least one image must be added",
-        "required_stall": "At least one stall must be added"
+        "required_stall": "At least one stall must be added",
+        "min_children": "Must pick at least {}",
+        "max_children": "Must pick at most {}"
     },
 
     "pl": {
@@ -30,6 +32,8 @@
         "not_found": "Zasób nie istnieje",
         "bad_request": "Nie można przetworzyć żądania z podanymi parametrami",
         "required_image": "Conajmniej jedno zdjęcie musi być dodane",
-        "required_stall": "Conajmniej jedno stoisko musi być dodane"
+        "required_stall": "Conajmniej jedno stoisko musi być dodane",
+        "min_children": "Musisz zaznaczyć co najmniej {} opcję",
+        "max_children": "Możesz zaznaczyć co najwyżej {} opcję"
     }
 }

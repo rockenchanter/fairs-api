@@ -157,7 +157,7 @@ class User(db.Model):
             va.min_length(self.password, 8),
             va.contains(self.password, va.upc_letter, "contains_uppercase"),
             va.contains(self.password, va.digit_regex, "contains_digit"),
-            ])
+        ])
 
     def __delete__(self):
         delete_file(self.image)
@@ -226,7 +226,8 @@ class Fair(DescribableMixin, db.Model):
     def _validate(self):
         self.add_errors_or_skip("name", [va.min_length(self.name, 1)])
         self.add_errors_or_skip("image", [va.min_length(self.image, 1)])
-        self.add_errors_or_skip("description", [va.min_length(self.description, 1)])
+        self.add_errors_or_skip(
+            "description", [va.min_length(self.description, 1)])
         self.add_errors_or_skip("start", [va.days_from_now(self.start, 30)])
         self.add_errors_or_skip("end", [va.days_from_now(self.end, 30)])
 
@@ -265,7 +266,8 @@ class Hall(DescribableMixin, db.Model):
 
     def _validate(self):
         self.add_errors_or_skip("name", [va.min_length(self.name, 1)])
-        self.add_errors_or_skip("description", [va.min_length(self.description, 1)])
+        self.add_errors_or_skip(
+            "description", [va.min_length(self.description, 1)])
         self.add_errors_or_skip("size", [va.min(self.size, 1)])
         self.add_errors_or_skip("price", [va.min(self.price, 0)])
         self.add_errors_or_skip("city", [va.min_length(self.city, 1)])
@@ -302,8 +304,14 @@ class Company(DescribableMixin, db.Model):
 
     def _validate(self):
         self.add_errors_or_skip("name", [va.min_length(self.name, 1)])
-        self.add_errors_or_skip("description", [va.min_length(self.description, 1)])
+        self.add_errors_or_skip(
+            "description", [va.min_length(self.description, 1)])
         self.add_errors_or_skip("image", [va.min_length(self.image, 1)])
+        self.add_errors_or_skip("industries",
+                                [
+                                    va.min_children(self.industries, 1),
+                                    va.max_children(self.industries, 3),
+                                ])
 
 
 class Address(db.Model):
@@ -359,7 +367,8 @@ class Image(db.Model):
 
     def _validate(self):
         self.add_errors_or_skip("path", [va.min_length(self.path, 1)])
-        self.add_errors_or_skip("description", [va.min_length(self.description, 1)])
+        self.add_errors_or_skip(
+            "description", [va.min_length(self.description, 1)])
 
     def __delete__(self):
         delete_file(self.path)

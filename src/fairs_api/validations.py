@@ -74,3 +74,15 @@ def days_from_now(date: datetime.date, target: int):
     if date < min_date:
         return ["min_date", target]
     return None
+
+
+def min_children(arr: list, target: int):
+    if len(arr) < target:
+        return ["min_children", target]
+    return None
+
+
+def max_children(arr: list, target: int):
+    if len(arr) > target:
+        return ["max_children", target]
+    return None

@@ -59,11 +59,16 @@ def logout():
 @bp.get("/authenticate")
 def authenticate():
     session["locale"] = request.args.get("locale", "en")
+    industries = [i.serialize(False) for i in
+                  db.session.scalars(db.select(md.Industry)).all()]
+    ret = {"industries": industries}
     if "user_id" in session:
-        user = db.get_or_404(md.User, session["user_id"], description="not_found")
-        return {"user": user.serialize(False)}, 200
-    else:
-        return {}, 200
+        user = db.session.get(md.User, session["user_id"])
+        if user:
+            ret["user"] = user.serialize(False)
+        else:
+            remove_user_from_session()
+    return ret, 200
 
 
 @bp.post("/register")

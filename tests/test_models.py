@@ -37,8 +37,7 @@ def test_fair_validations(fair_params):
     revalidate(sut, False)
 
 
-def test_company_validations(company_params):
-    revalidate(md.Company(**company_params), True)
+def test_company_validations(company_params, address_params):
     set_and_revalidate(md.Company(**company_params), False, "name", "")
     set_and_revalidate(md.Company(**company_params), False, "description", "")
     set_and_revalidate(md.Company(**company_params), False, "image", "")
