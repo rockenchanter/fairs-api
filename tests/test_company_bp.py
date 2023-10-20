@@ -120,7 +120,8 @@ def test_create(client, auth, company_params, address_params, create_user, make_
     auth.login(usr["email"], usr["password"])
 
     body = company_params.copy()
-    body.update(address_params)
+    ap = address_params.copy()
+    body.update(ap)
     image = path.join(path.dirname(path.abspath(__file__)),
                       "resources/face.jpg")
     body["image"] = (open(image, "rb"), "image.jpg", "image/jpeg")
@@ -128,5 +129,29 @@ def test_create(client, auth, company_params, address_params, create_user, make_
     res = client.post("/companies/create", data=body)
     data = json.loads(res.data)
 
+    print(data)
     assert res.status_code == 201
     assert "company" in data
+
+
+def test_update(client, auth, company_params, create_user, make_industries, make_companies):
+    usr = create_user({"role": "exhibitor"})
+    auth.login(usr["email"], usr["password"])
+    body = company_params.copy()
+    body["exhibitor_id"] = usr["id"]
+
+    res = client.patch("/companies/1", data=body)
+    data = json.loads(res.data)
+
+    print(data)
+    assert res.status_code == 200
+    assert "company" in data
+
+
+def test_destroy(client, auth, create_user, make_industries, make_companies):
+    usr = create_user({"role": "exhibitor"})
+    auth.login(usr["email"], usr["password"])
+
+    res = client.delete("/companies/1")
+
+    assert res.status_code == 200

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship, DeclarativeBase
 from sqlalchemy.ext.associationproxy import association_proxy, AssociationProxy
 from sqlalchemy import func, Column, ForeignKey
 from werkzeug.security import generate_password_hash
+from flask import session
 import datetime
 import enum
 
@@ -43,7 +44,12 @@ class Base(DeclarativeBase):
                 if error not in self._errors[field]:
                     self._errors[field].append(error)
 
-    def is_valid(self):
+    def update(self, params: dict) -> None:
+        for key, value in params.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+
+    def is_valid(self) -> bool:
         self._errors = {}
         self._validate()
         return len(self._errors.keys()) == 0
@@ -330,6 +336,7 @@ class Address(db.Model):
         self.add_errors_or_skip("city", [va.min_length(self.city, 1)])
         self.add_errors_or_skip("street", [va.min_length(self.street, 1)])
         self.add_errors_or_skip("zipcode", [va.min_length(self.zipcode, 5)])
+        self.add_errors_or_skip("company_id", [va.min(self.company_id, 1)])
 
 
 class Industry(db.Model):
@@ -440,6 +447,15 @@ class FairProxy(db.Model):
 def before_delete(mapper, connection, target):
     print(target)
     target.__delete__()
+
+
+def get_company_id():
+    stmt = db.select(Company).\
+           filter(Company.exhibitor_id == session["user_id"])
+
+    if com := db.session.scalar(stmt):
+        return com.id
+    return None
 
 
 event.listen(Image, 'after_delete', before_delete)

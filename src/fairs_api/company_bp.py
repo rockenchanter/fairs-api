@@ -3,7 +3,7 @@ from sqlalchemy.orm import contains_eager
 from werkzeug.exceptions import NotFound
 
 from . import utils as ut
-from .models import Address, Company, Industry, db
+from .models import Address, Company, Industry, db, get_company_id
 
 bp = Blueprint("company", __name__, url_prefix="/companies")
 _base_select = db.select(Company).outerjoin(Company.addresses).outerjoin(
@@ -26,8 +26,20 @@ def address_params():
     return {
         "city": ut.get_str("city"),
         "zipcode": ut.get_str("zipcode"),
-        "street": ut.get_str("street")
+        "street": ut.get_str("street"),
     }
+
+
+def get_industries():
+    fd = request.form.get("industry", None)
+    if fd:
+        fd = fd.split(",")
+        industries_ids = [int(x.strip()) for x in fd]
+        industries = db.session.scalars(
+                db.select(Industry).
+                filter(Industry.id.in_(industries_ids))).all()
+        return industries
+    return None
 
 
 @bp.get("/")
@@ -60,16 +72,15 @@ def new():
     ut.check_role("exhibitor")
     cmpny = Company(**company_params())
     addr = Address(**address_params())
+    addr.company_id = 1
 
-    industries_ids = [int(x.strip()) for x in
-                      request.form.get("industry", "0").split(",")]
-    industries = db.session.scalars(
-            db.select(Industry).filter(Industry.id.in_(industries_ids))).all()
+    industries = get_industries()
+    if industries:
+        for i in industries:
+            cmpny.industries.append(i)
 
     cmpny.exhibitor_id = session.get("user_id", None)
     cmpny.addresses.append(addr)
-    for i in industries:
-        cmpny.industries.append(i)
 
     cvalid = cmpny.is_valid()
     avalid = addr.is_valid()
@@ -84,3 +95,36 @@ def new():
     ce = cmpny.localize_errors(session["locale"])
     ae = addr.localize_errors(session["locale"])
     return {"errors": {"company": ce, "address": ae}}, 422
+
+
+@bp.patch("/<int:id>")
+def update(id: int):
+    ut.check_role("exhibitor")
+    ut.check_ownership("exhibitor_id")
+
+    cp = company_params()
+    company = db.session.scalar(_base_select.filter(Company.id == id))
+    industries = get_industries()
+    if company:
+        cp.pop("image")
+        company.update(cp)
+        if industries:
+            company.industries.clear()
+            for ind in industries:
+                company.industries.append(ind)
+        if company.is_valid():
+            db.session.commit()
+            return {"company": id}, 200
+        err = company.localize_errors(session["locale"])
+        return {"errors": {"company": err}}, 422
+    raise NotFound
+
+
+@bp.delete("/<int:id>")
+def destroy(id: int):
+    ut.check_role("exhibitor")
+    company = db.session.scalar(_base_select.filter(Company.id == id))
+    if company and company.exhibitor.id == session["user_id"]:
+        db.session.delete(company)
+        db.session.commit()
+    return {}, 200
