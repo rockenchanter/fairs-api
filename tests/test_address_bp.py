@@ -1,6 +1,11 @@
 import pytest
 
-pytestmark = pytest.mark.usefixtures("clean_db", "create_address")
+pytestmark = pytest.mark.usefixtures(
+    "clean_db",
+    "create_address",
+    "create_address",
+    "create_company"
+)
 
 
 def test_create(auth, client, create_user, address_params):
@@ -26,7 +31,7 @@ def test_update(auth, client, address_params, create_user):
     assert response.status_code == 200
 
 
-def test_destroy(auth, client, create_user, create_company):
+def test_destroy(auth, client, create_user):
     data = create_user({"role": "exhibitor"})
     auth.login(data["email"], data["password"])
     response = client.delete("/addresses/6")

@@ -1,9 +1,12 @@
 from flask import Blueprint, session
 
+from werkzeug.exceptions import NotFound
 from sqlalchemy.orm import contains_eager
-from .models import Address, Company, Exhibitor, db
+from .models import Address, Company, db, get_company_id
 from . import utils as ut
 
+_base_select = db.select(Address).\
+        join(Address.company).options(contains_eager(Address.company))
 
 bp = Blueprint("address", __name__, url_prefix="/addresses")
 
@@ -13,7 +16,7 @@ def address_params():
         "zipcode": ut.get_str("zipcode"),
         "city": ut.get_str("city"),
         "street": ut.get_str("street"),
-        "company_id": ut.get_int("company_id", 0)
+        "company_id": get_company_id()
     }
 
 
@@ -22,7 +25,7 @@ def new():
     ut.check_role("exhibitor")
     ut.check_ownership("exhibitor_id")
     obj = Address(**address_params())
-    if obj.is_valid() and obj.company_id != 0:
+    if obj.is_valid():
         db.session.add(obj)
         db.session.flush()
         dt = obj.serialize(False)
@@ -36,16 +39,15 @@ def new():
 def update(id: int):
     ut.check_role("exhibitor")
     ut.check_ownership("exhibitor_id")
-    obj = db.session.get(Address, id)
-    par = address_params()
-    tmp = Address(**par)
-    if tmp.is_valid() and obj:
-        stmt = db.update(Address).where(Address.id == id).values(**par)
-        db.session.execute(stmt)
-        db.session.commit()
-        return {"address": id}, 200
-    errors = obj.localize_errors(session["locale"])
-    return {"errors": {"address": errors}}, 422
+    obj = db.session.scalar(_base_select.filter(Address.id == id))
+    if obj:
+        obj.update(address_params())
+        if obj.is_valid():
+            db.session.commit()
+            return {"address": id}, 200
+        errors = obj.localize_errors(session["locale"])
+        return {"errors": {"address": errors}}, 422
+    raise NotFound
 
 
 @bp.delete("/<int:id>")
