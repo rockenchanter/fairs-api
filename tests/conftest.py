@@ -142,7 +142,8 @@ def fair_params():
     correct_sd = datetime.timedelta(days=31) + now
     return {
         "name": "Some Fair", "description": "x", "image": "aaa",
-        "start": correct_sd, "end": correct_sd
+        "start": correct_sd, "end": correct_sd, "organizer_id": 1,
+        "hall_id": 1
     }
 
 

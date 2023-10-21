@@ -37,8 +37,8 @@ def upgrade() -> None:
                     sa.PrimaryKeyConstraint('id')
                     )
     op.create_table('fair',
-                    sa.Column('start', sa.DateTime(), nullable=False),
-                    sa.Column('end', sa.DateTime(), nullable=False),
+                    sa.Column('start', sa.Date(), nullable=False),
+                    sa.Column('end', sa.Date(), nullable=False),
                     sa.Column('image', sa.String(), nullable=False),
                     sa.Column('published', sa.Boolean(), nullable=False),
                     sa.Column('organizer_id', sa.Integer(), nullable=False),

@@ -71,7 +71,9 @@ def email(value):
 @required
 def days_from_now(date: datetime.date, target: int):
     min_date = datetime.timedelta(days=target) + datetime.date.today()
-    if date < min_date:
+    if not date:
+        return ["incorrect_date"]
+    elif date < min_date:
         return ["min_date", target]
     return None
 

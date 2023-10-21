@@ -2,6 +2,7 @@ from werkzeug.datastructures import FileStorage
 from werkzeug.exceptions import Forbidden
 from flask import current_app, request, session
 import os
+import datetime
 
 
 def get_filename(file: FileStorage) -> str:
@@ -37,6 +38,19 @@ def delete_file(path: str) -> None:
 
 def get_checkbox(key: str) -> bool:
     return request.form.get(key, "").lower() == "true"
+
+
+def get_date(key: str) -> datetime.datetime:
+    trimmed = get_str(key)
+    df = "%Y-%m-%d"
+    if trimmed:
+        try:
+            dt = datetime.datetime.strptime(trimmed, df)
+            return dt.date()
+        except ValueError:
+            pass
+
+    return None
 
 
 def get_int(key: str, default: int) -> int:

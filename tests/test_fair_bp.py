@@ -1,5 +1,6 @@
 import pytest
 import json
+from os import path
 from datetime import timedelta as dt
 from datetime import date
 
@@ -75,3 +76,19 @@ def test_show(client, make_fairs, id, status, create_user, auth):
     assert response.status_code == status
     if status == 200:
         assert "fair" in data
+
+
+def test_create(client, create_user, auth, fair_params):
+    user = create_user({"role": "organizer"})
+    auth.login(user["email"], user["password"])
+    fp = fair_params.copy()
+    image = path.join(path.dirname(path.abspath(__file__)),
+                      "resources/hall_img.jpg")
+    fp["image"] = (open(image, "rb"), "image.jpg", "image/jpeg")
+
+    res = client.post("/fairs/create", data=fp)
+    data = json.loads(res.data)
+
+    print(data)
+    assert res.status_code == 201
+    assert "fair" in data

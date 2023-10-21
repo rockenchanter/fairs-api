@@ -15,7 +15,8 @@
         "required_image": "At least one image must be added",
         "required_stall": "At least one stall must be added",
         "min_children": "Must pick at least {}",
-        "max_children": "Must pick at most {}"
+        "max_children": "Must pick at most {}",
+        "incorrect_date": "Date is missing or format is invalid"
     },
 
     "pl": {
@@ -34,6 +35,7 @@
         "required_image": "Conajmniej jedno zdjęcie musi być dodane",
         "required_stall": "Conajmniej jedno stoisko musi być dodane",
         "min_children": "Musisz zaznaczyć co najmniej {} opcję",
-        "max_children": "Możesz zaznaczyć co najwyżej {} opcję"
+        "max_children": "Możesz zaznaczyć co najwyżej {} opcję",
+        "incorrect_date": "Format daty się nie zgadza lub ich nie podano"
     }
 }

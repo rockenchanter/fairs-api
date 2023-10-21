@@ -200,8 +200,8 @@ class Organizer(User):
 
 
 class Fair(DescribableMixin, db.Model):
-    start: Mapped[datetime.datetime] = mapped_column(default=func.now())
-    end: Mapped[datetime.datetime]
+    start: Mapped[datetime.date] = mapped_column(default=func.now())
+    end: Mapped[datetime.date]
     image: Mapped[str]
     published: Mapped[bool] = mapped_column(default=True)
 
@@ -236,6 +236,8 @@ class Fair(DescribableMixin, db.Model):
             "description", [va.min_length(self.description, 1)])
         self.add_errors_or_skip("start", [va.days_from_now(self.start, 30)])
         self.add_errors_or_skip("end", [va.days_from_now(self.end, 30)])
+        self.add_errors_or_skip("hall_id", [va.min(self.hall_id, 1)])
+        self.add_errors_or_skip("organizer_id", [va.min(self.organizer_id, 1)])
 
     def __delete__(self):
         delete_file(self.image)

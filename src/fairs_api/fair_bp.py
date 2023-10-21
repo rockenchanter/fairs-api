@@ -25,8 +25,9 @@ def fair_params():
     return {
         "name": ut.get_str("name"),
         "description": ut.get_str("description"),
-        "start": ut.get_str("start"),
-        "end": ut.get_str("end"),
+        "hall_id": ut.get_int("hall_id", 0),
+        "start": ut.get_date("start"),
+        "end": ut.get_date("end"),
         "published": ut.get_checkbox("published"),
         "image": ut.get_filename(request.files["image"])[1]
     }
@@ -63,6 +64,23 @@ def show(id: int):
         return {"fair": obj.serialize()}, 200
 
 
+@bp.post("/create")
+def new():
+    ut.check_role("organizer")
+    obj_par = fair_params()
+    obj = Fair(**obj_par)
+    obj.organizer_id = session["user_id"]
+
+    if obj.is_valid():
+        db.session.add(obj)
+        db.session.flush()
+        ut.store_file(request.files["image"], "image")
+        dt = obj.serialize()
+        db.session.commit()
+        return {"fair": dt}, 201
+    errors = obj.localize_errors(session["locale"])
+    return {"obj": obj.serialize(False), "errors": errors}, 422
+
 # @bp.delete("/<int:id>")
 # def destroy(id: int):
 #     check_role("administrator")
@@ -79,20 +97,6 @@ def show(id: int):
 #     return {}, 200
 
 
-# @bp.post("/create")
-# def new():
-#     check_role("administrator")
-#     hp = hall_params()
-#     hall = Hall(**hp)
-
-#     if hall.is_valid():
-#         db.session.add(hall)
-#         db.session.flush()
-#         dt = hall.serialize(False)
-#         db.session.commit()
-#         return {"hall": dt}, 201
-#     errors = hall.localize_errors(session["locale"])
-#     return {"hall": hall.serialize(False), "errors": errors}, 422
 
 
 # @bp.patch("/<int:id>")
