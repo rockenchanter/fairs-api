@@ -96,10 +96,12 @@ def create_app(mode="development"):
     from .stall_bp import bp as stall
     from .company_bp import bp as company
     from .address_bp import bp as address
+    from .fair_bp import bp as fair
     app.register_blueprint(auth)
     app.register_blueprint(hall)
     app.register_blueprint(image)
     app.register_blueprint(stall)
     app.register_blueprint(company)
     app.register_blueprint(address)
+    app.register_blueprint(fair)
     return app
