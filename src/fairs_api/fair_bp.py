@@ -9,16 +9,16 @@ from . import utils as ut
 
 bp = Blueprint("fairs", __name__, url_prefix="/fairs")
 _base_select = db.select(Fair).\
-        outerjoin(Fair.organizer).\
-        outerjoin(Fair.hall).\
-        outerjoin(Fair.industries).\
-        outerjoin(Fair.fair_proxies).\
-        options(
-            contains_eager(Fair.organizer),
-            contains_eager(Fair.hall),
-            contains_eager(Fair.industries),
-            contains_eager(Fair.fair_proxies),
-        )
+    outerjoin(Fair.organizer).\
+    outerjoin(Fair.hall).\
+    outerjoin(Fair.industries).\
+    outerjoin(Fair.fair_proxies).\
+    options(
+    contains_eager(Fair.organizer),
+    contains_eager(Fair.hall),
+    contains_eager(Fair.industries),
+    contains_eager(Fair.fair_proxies),
+)
 
 
 def fair_params():
@@ -34,7 +34,7 @@ def fair_params():
 
 @bp.get("")
 def index():
-    select = _base_select
+    select = _base_select.filter(Fair.published)
 
     if (name_arg := request.args.get("name", None)) is not None:
         select = select.filter(Fair.name.like(f"%{name_arg}"))
@@ -50,21 +50,17 @@ def index():
     return {"fairs": [obj.serialize() for obj in data]}, 200
 
 
-# @bp.get("/<int:id>")
-# def show(id: int):
-#     select = db.select(Hall).outerjoin(Hall.images).outerjoin(
-#             Hall.fairs).outerjoin(Hall.stalls).filter(
-#                 Hall.id == id).options(
-#                     contains_eager(Hall.images),
-#                     contains_eager(Hall.fairs),
-#                     contains_eager(Hall.stalls))
+@bp.get("/<int:id>")
+def show(id: int):
+    select = _base_select.filter(Fair.id == id)
 
-#     with db.session() as session:
-#         hall = session.scalars(select).unique().first()
-#         if hall is None:
-#             raise NotFound
-#         else:
-#             return {"hall": hall.serialize()}, 200
+    obj = db.session.scalar(select)
+    if obj is None:
+        raise NotFound
+    elif obj.published is False and obj.organizer_id != session.get("user_id", None):
+        raise NotFound
+    else:
+        return {"fair": obj.serialize()}, 200
 
 
 # @bp.delete("/<int:id>")

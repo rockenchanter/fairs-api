@@ -15,9 +15,9 @@ def make_fairs(app):
         Fair(name="First Fair", description="Some description", image="temp",
              start=base, end=base+dt(days=3), organizer_id=1),
         Fair(name="Second Fair", description="Some description", image="temp",
-             start=base+dt(days=5), end=base+dt(days=8), organizer_id=1),
+             start=base+dt(days=5), end=base+dt(days=8), organizer_id=1, published=False),
         Fair(name="Third Fair", description="Some description", image="temp",
-             start=base+dt(days=10), end=base+dt(days=13), organizer_id=1),
+             start=base+dt(days=10), end=base+dt(days=13), organizer_id=2, published=False),
         Fair(name="Fourth Fair", description="Some description", image="temp",
              start=base+dt(days=15), end=base+dt(days=18), organizer_id=1),
         Fair(name="Fifth Fair", description="Some description", image="temp",
@@ -42,14 +42,14 @@ def test_index_without_parameters(client, make_fairs):
     data = json.loads(res.data)
 
     assert res.status_code == 200
-    assert len(data["fairs"]) == 5
+    assert len(data["fairs"]) == 3
 
 
 @pytest.mark.parametrize("params,expected", [
     ({"name": "First Fair"}, 1),
-    ({"start": date(2050, 1, 10)}, 3),
+    ({"start": date(2050, 1, 10)}, 2),
     ({"start": date(2050, 1, 21)}, 1),
-    ({"city": "Rzeszów"}, 2),
+    ({"city": "Rzeszów"}, 1),
     ({"city": "Kraków"}, 1),
 ])
 def test_index_with_parameters(client, params, expected, make_fairs):
@@ -58,3 +58,20 @@ def test_index_with_parameters(client, params, expected, make_fairs):
 
     assert response.status_code == 200
     assert len(data["fairs"]) == expected
+
+
+@pytest.mark.parametrize("id,status", [
+    (1, 200),   # published fair
+    (2, 200),   # unpublished fair, but accessed by organizer
+    (3, 404),   # unpublished fair
+    (13, 404),  # non existing fair
+])
+def test_show(client, make_fairs, id, status, create_user, auth):
+    user = create_user({"role": "organizer"})
+    auth.login(user["email"], user["password"])
+    response = client.get(f"/fairs/{id}")
+    data = json.loads(response.data)
+
+    assert response.status_code == status
+    if status == 200:
+        assert "fair" in data
