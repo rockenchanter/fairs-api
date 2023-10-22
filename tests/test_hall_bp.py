@@ -6,38 +6,6 @@ from datetime import date
 pytestmark = pytest.mark.usefixtures("clean_db")
 
 
-@pytest.fixture()
-def make_halls(app, hall_params, fair_params, image_params, create_user):
-    halls = [
-        Hall(**hall_params), Hall(**hall_params), Hall(**hall_params),
-        Hall(**hall_params), Hall(**hall_params)
-    ]
-    fairs = [
-        Fair(**fair_params), Fair(**fair_params), Fair(**fair_params),
-        Fair(**fair_params), Fair(**fair_params)
-    ]
-    halls[0].parking = True
-    halls[0].internet = True
-    halls[1].internet = True
-    halls[2].dissablitity = True
-    halls[3].pets = True
-
-    day = 1
-    for i in range(len(fairs)):
-        fairs[i].start = date(2023, 1, day)
-        day += 4
-        fairs[i].end = date(2023, 1, day)
-        day += 1
-        halls[i].fairs.append(fairs[i])
-        halls[i].images.append(Image(**image_params))
-        fairs[i].organizer_id = 1
-
-    with app.app_context():
-        db.session.add_all(halls)
-        db.session.add_all(fairs)
-        db.session.commit()
-
-
 def test_index_without_parameters(client, make_halls):
     response = client.get("/halls/")
     data = json.loads(response.data)

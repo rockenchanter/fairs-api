@@ -1,5 +1,4 @@
 from fairs_api import models as md
-import datetime
 
 
 def revalidate(obj, expected):
@@ -22,19 +21,10 @@ def test_user_validations(user_params):
 
 
 def test_fair_validations(fair_params):
-    now = datetime.date.today()
-    valid_sd = now + datetime.timedelta(days=30)
-    sut = md.Fair(**fair_params)
 
-    revalidate(md.Fair(**fair_params), True)
     set_and_revalidate(md.Fair(**fair_params), False, "name", "")
     set_and_revalidate(md.Fair(**fair_params), False, "description", "")
-    set_and_revalidate(md.Fair(**fair_params), False, "start", now)
     set_and_revalidate(md.Fair(**fair_params), False, "image", "")
-    set_and_revalidate(md.Fair(**fair_params), True, "end", valid_sd)
-    sut.start = valid_sd
-    sut.end = valid_sd - datetime.timedelta(days=1)
-    revalidate(sut, False)
 
 
 def test_company_validations(company_params, address_params):

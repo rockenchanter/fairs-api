@@ -78,17 +78,45 @@ def test_show(client, make_fairs, id, status, create_user, auth):
         assert "fair" in data
 
 
-def test_create(client, create_user, auth, fair_params):
+def test_create(client, create_user, auth, fair_params, make_industries, make_halls):
     user = create_user({"role": "organizer"})
     auth.login(user["email"], user["password"])
     fp = fair_params.copy()
     image = path.join(path.dirname(path.abspath(__file__)),
                       "resources/hall_img.jpg")
     fp["image"] = (open(image, "rb"), "image.jpg", "image/jpeg")
+    fp["industry"] = "1,2,3"
+    fp["start"] = date(2050, 1, 10)
+    fp["end"] = date(2050, 1, 15)
 
     res = client.post("/fairs/create", data=fp)
     data = json.loads(res.data)
 
-    print(data)
     assert res.status_code == 201
     assert "fair" in data
+
+
+def test_update(client, create_user, auth, fair_params, make_fairs, make_industries):
+    user = create_user({"role": "organizer"})
+    auth.login(user["email"], user["password"])
+    par = fair_params.copy()
+    image = path.join(path.dirname(path.abspath(__file__)),
+                      "resources/hall_img.jpg")
+    par["image"] = (open(image, "rb"), "image.jpg", "image/jpeg")
+    par["industry"] = "4,5,6"
+
+    res = client.patch("/fairs/1", data=par)
+    data = json.loads(res.data)
+
+    assert res.status_code == 200
+    assert "fair" in data
+
+
+def test_destroy(client, create_user, auth, make_fairs):
+    user = create_user({"role": "organizer"})
+    auth.login(user["email"], user["password"])
+
+    response = client.delete("/fairs/1")
+
+    assert response.status_code == 200
+

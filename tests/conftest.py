@@ -1,5 +1,6 @@
 import pytest
 import datetime
+from datetime import date
 from werkzeug.security import generate_password_hash
 
 from fairs_api import create_app
@@ -25,6 +26,72 @@ class AuthActions:
 
     def logout(self):
         return self._client.get("/logout")
+
+
+@pytest.fixture()
+def make_halls(app, hall_params, fair_params, image_params, create_user):
+    halls = [
+        md.Hall(**hall_params), md.Hall(**hall_params), md.Hall(**hall_params),
+        md.Hall(**hall_params), md.Hall(**hall_params)
+    ]
+    fairs = [
+        md.Fair(**fair_params), md.Fair(**fair_params), md.Fair(**fair_params),
+        md.Fair(**fair_params), md.Fair(**fair_params)
+    ]
+    halls[0].parking = True
+    halls[0].internet = True
+    halls[1].internet = True
+    halls[2].dissablitity = True
+    halls[3].pets = True
+
+    day = 1
+    for i in range(len(fairs)):
+        fairs[i].start = date(2023, 1, day)
+        day += 4
+        fairs[i].end = date(2023, 1, day)
+        day += 1
+        halls[i].fairs.append(fairs[i])
+        halls[i].images.append(md.Image(**image_params))
+        fairs[i].organizer_id = 1
+
+    with app.app_context():
+        md.db.session.add_all(halls)
+        md.db.session.add_all(fairs)
+        md.db.session.commit()
+
+
+@pytest.fixture
+def make_industries(app):
+    dset = [
+        {"name": "Technologies & Software", "icon": "devices", "color": "blue"},
+        {"name": "Healthcare", "icon": "medication", "color": "red"},
+        {"name": "Financial Services", "icon": "monetization_on",
+         "color": "amber-lighten-1"},
+        {"name": "Retail & E-commerce", "icon": "storefront", "color": "black"},
+        {"name": "Energy", "icon": "bolt", "color": "yellow"},
+        {"name": "Automotive", "icon": "garage", "color": "grey-darken-1"},
+        {"name": "Aerospace", "icon": "flight", "color": "blue-lighten-3"},
+        {"name": "Food & Beverage", "icon": "restaurant", "color": "red"},
+        {"name": "Entertainment & Media", "icon": "live_tv", "color": "purple"},
+        {"name": "Transportation & Logistics",
+         "icon": "local_shipping", "color": "grey-darken-1"},
+        {"name": "Education & E-learning", "icon": "school", "color": "blue"},
+        {"name": "Agriculture & Agribusiness",
+         "icon": "agriculture", "color": "green"},
+        {"name": "Legal Services", "icon": "gavel", "color": "brown-darken-1"},
+        {"name": "Sports & Recreation",
+         "icon": "fitness_center", "color": "red-lighten-1"},
+        {"name": "Biotechnology", "icon": "biotech", "color": "green"},
+        {"name": "Gaming & Entertainment", "icon": "sports_esports", "color": "red"},
+        {"name": "Architecture", "icon": "architecture", "color": "green"},
+        {"name": "Fashion", "icon": "diamond", "color": "pink-lighten-2"},
+        {"name": "Environmental Services", "icon": "water_drop", "color": "blue"},
+        {"name": "Real Estate", "icon": "apartment", "color": "grey-darken-1"}
+    ]
+    ind = [md.Industry(**par) for par in dset]
+    with app.app_context():
+        md.db.session.add_all(ind)
+        md.db.session.commit()
 
 
 @pytest.fixture

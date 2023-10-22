@@ -1,9 +1,9 @@
 from flask import Blueprint, request, session
 from werkzeug.exceptions import NotFound
 from sqlalchemy.orm import contains_eager
-from sqlalchemy import and_, update
+import datetime
 
-from .models import Organizer, Fair, Hall, db
+from .models import Fair, Hall, Industry, db
 from . import utils as ut
 
 
@@ -19,6 +19,31 @@ _base_select = db.select(Fair).\
     contains_eager(Fair.industries),
     contains_eager(Fair.fair_proxies),
 )
+
+
+def get_industries():
+    fd = request.form.get("industry", None)
+    if fd:
+        fd = fd.split(",")
+        industries_ids = [int(x.strip()) for x in fd]
+        industries = db.session.scalars(
+            db.select(Industry).
+            filter(Industry.id.in_(industries_ids))).all()
+        return industries
+    return None
+
+
+def hall_available(hall_id: int, start: datetime.date, end: datetime.date) -> bool:
+    fairs = db.session.\
+        scalars(db.select(Fair).filter(Fair.hall_id == hall_id)).all()
+    if not fairs:
+        return False
+    valid = True
+    for f in fairs:
+        if not (end < f.start or start > f.end):
+            valid = False
+            break
+    return valid
 
 
 def fair_params():
@@ -68,49 +93,60 @@ def show(id: int):
 def new():
     ut.check_role("organizer")
     obj_par = fair_params()
+    hall_valid = hall_available(
+            obj_par["hall_id"],
+            obj_par["start"],
+            obj_par["end"])
     obj = Fair(**obj_par)
     obj.organizer_id = session["user_id"]
 
-    if obj.is_valid():
+    industries = get_industries()
+    if industries:
+        for i in industries:
+            obj.industries.append(i)
+    if obj.is_valid() and hall_valid:
         db.session.add(obj)
         db.session.flush()
         ut.store_file(request.files["image"], "image")
         dt = obj.serialize()
         db.session.commit()
         return {"fair": dt}, 201
+
+    if not hall_valid:
+        obj.add_error("hall_id", "hall_unavailable")
+
     errors = obj.localize_errors(session["locale"])
     return {"obj": obj.serialize(False), "errors": errors}, 422
 
-# @bp.delete("/<int:id>")
-# def destroy(id: int):
-#     check_role("administrator")
 
-#     select = db.select(Hall).outerjoin(Hall.images).outerjoin(
-#             Hall.stalls).outerjoin(Hall.fairs).filter(Hall.id == id).options(
-#                 contains_eager(Hall.images),
-#                 contains_eager(Hall.fairs),
-#                 contains_eager(Hall.stalls))
-#     hall = db.session.scalar(select)
-#     if hall:
-#         db.session.delete(hall)
-#         db.session.commit()
-#     return {}, 200
+@bp.patch("/<int:id>")
+def update(id: int):
+    ut.check_role("organizer")
+
+    cp = fair_params()
+    obj = db.session.scalar(_base_select.filter(Fair.id == id))
+    industries = get_industries()
+    if obj and obj.organizer_id == session["user_id"]:
+        cp.pop("image")
+        cp.pop("hall_id")
+        obj.update(cp)
+        if industries:
+            obj.industries.clear()
+            for ind in industries:
+                obj.industries.append(ind)
+        if obj.is_valid():
+            db.session.commit()
+            return {"fair": id}, 200
+        err = obj.localize_errors(session["locale"])
+        return {"errors": {"fair": err}}, 422
+    raise NotFound
 
 
-
-
-# @bp.patch("/<int:id>")
-# def _update(id: int):
-#     check_role("administrator")
-#     hp = hall_params()
-#     hp["id"] = id
-#     stmt = update(Hall).filter(Hall.id == hp["id"]).values(**hp)
-
-#     hall = Hall(**hp)
-#     if hall.is_valid():
-#         db.session.execute(stmt)
-#         db.session.commit()
-#         return {"hall": id}, 200
-
-#     errors = hall.localize_errors(session["locale"])
-#     return {"hall": hall.serialize(False), "errors": errors}, 422
+@bp.delete("/<int:id>")
+def destroy(id: int):
+    ut.check_role("organizer")
+    obj = db.session.scalar(_base_select.filter(Fair.id == id))
+    if obj:
+        db.session.delete(obj)
+        db.session.commit()
+    return {}, 200

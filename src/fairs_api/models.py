@@ -44,6 +44,11 @@ class Base(DeclarativeBase):
                 if error not in self._errors[field]:
                     self._errors[field].append(error)
 
+    def add_error(self, field, error_key):
+        if field not in self._errors.keys():
+            self._errors[field] = []
+        self._errors[field].append([error_key])
+
     def update(self, params: dict) -> None:
         for key, value in params.items():
             if hasattr(self, key):
@@ -238,6 +243,7 @@ class Fair(DescribableMixin, db.Model):
         self.add_errors_or_skip("end", [va.days_from_now(self.end, 30)])
         self.add_errors_or_skip("hall_id", [va.min(self.hall_id, 1)])
         self.add_errors_or_skip("organizer_id", [va.min(self.organizer_id, 1)])
+        self.add_errors_or_skip("industries", [va.min_children(self.industries, 1)])
 
     def __delete__(self):
         delete_file(self.image)
