@@ -88,8 +88,10 @@ class Base(DeclarativeBase):
             else:
                 if isinstance(value, list):
                     props[key] = [rel.serialize(False) for rel in value]
-                if isinstance(value, db.Model):
+                elif isinstance(value, db.Model):
                     props[key] = value.serialize(False)
+                elif isinstance(value, datetime.date):
+                    props[key] = value.strftime("%Y-%m-%d")
         for key in keys_to_delete:
             props.pop(key)
 
@@ -240,7 +242,10 @@ class Fair(DescribableMixin, db.Model):
         self.add_errors_or_skip(
             "description", [va.min_length(self.description, 1)])
         self.add_errors_or_skip("start", [va.days_from_now(self.start, 30)])
-        self.add_errors_or_skip("end", [va.days_from_now(self.end, 30)])
+        self.add_errors_or_skip("end", [
+            va.days_from_now(self.end, 30),
+            va.min(self.end, self.start),
+            ])
         self.add_errors_or_skip("hall_id", [va.min(self.hall_id, 1)])
         self.add_errors_or_skip("organizer_id", [va.min(self.organizer_id, 1)])
         self.add_errors_or_skip("industries", [va.min_children(self.industries, 1)])

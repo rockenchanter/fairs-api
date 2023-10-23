@@ -3,7 +3,7 @@ from sqlalchemy.orm import contains_eager
 from werkzeug.exceptions import NotFound
 
 from . import utils as ut
-from .models import Address, Company, Industry, db, get_company_id
+from .models import Address, Company, Industry, db
 
 bp = Blueprint("company", __name__, url_prefix="/companies")
 _base_select = db.select(Company).outerjoin(Company.addresses).outerjoin(
@@ -42,7 +42,7 @@ def get_industries():
     return None
 
 
-@bp.get("/")
+@bp.get("")
 def index():
     a = request.args
     stmt = _base_select

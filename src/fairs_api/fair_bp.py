@@ -11,14 +11,23 @@ bp = Blueprint("fairs", __name__, url_prefix="/fairs")
 _base_select = db.select(Fair).\
     outerjoin(Fair.organizer).\
     outerjoin(Fair.hall).\
+    outerjoin(Hall.stalls).\
     outerjoin(Fair.industries).\
     outerjoin(Fair.fair_proxies).\
+    order_by(Fair.start).\
     options(
     contains_eager(Fair.organizer),
-    contains_eager(Fair.hall),
+    contains_eager(Fair.hall).contains_eager(Hall.stalls),
     contains_eager(Fair.industries),
-    contains_eager(Fair.fair_proxies),
+    contains_eager(Fair.fair_proxies)
 )
+
+
+def insert_stalls(hall, params):
+    params["hall"]["stalls"] = []
+    for s in hall.stalls:
+        params["hall"]["stalls"].append(s.serialize(False))
+    return params
 
 
 def get_industries():
@@ -37,7 +46,7 @@ def hall_available(hall_id: int, start: datetime.date, end: datetime.date) -> bo
     fairs = db.session.\
         scalars(db.select(Fair).filter(Fair.hall_id == hall_id)).all()
     if not fairs:
-        return False
+        return True
     valid = True
     for f in fairs:
         if not (end < f.start or start > f.end):
@@ -54,7 +63,7 @@ def fair_params():
         "start": ut.get_date("start"),
         "end": ut.get_date("end"),
         "published": ut.get_checkbox("published"),
-        "image": ut.get_filename(request.files["image"])[1]
+        "image": ut.get_filename(request.files.get("image", None))[1]
     }
 
 
@@ -73,7 +82,8 @@ def index():
         select = select.filter(Fair.start >= s)
 
     data = db.session.scalars(select).unique().all()
-    return {"fairs": [obj.serialize() for obj in data]}, 200
+    data = [insert_stalls(obj.hall, obj.serialize()) for obj in data]
+    return {"fairs": data}, 200
 
 
 @bp.get("/<int:id>")
@@ -86,7 +96,7 @@ def show(id: int):
     elif obj.published is False and obj.organizer_id != session.get("user_id", None):
         raise NotFound
     else:
-        return {"fair": obj.serialize()}, 200
+        return {"fair": insert_stalls(obj.hall, obj.serialize())}, 200
 
 
 @bp.post("/create")
@@ -116,7 +126,7 @@ def new():
         obj.add_error("hall_id", "hall_unavailable")
 
     errors = obj.localize_errors(session["locale"])
-    return {"obj": obj.serialize(False), "errors": errors}, 422
+    return {"obj": obj.serialize(False), "errors": {"fair": errors}}, 422
 
 
 @bp.patch("/<int:id>")
@@ -126,9 +136,8 @@ def update(id: int):
     cp = fair_params()
     obj = db.session.scalar(_base_select.filter(Fair.id == id))
     industries = get_industries()
-    if obj and obj.organizer_id == session["user_id"]:
+    if obj and obj.organizer_id == session["user_id"] and not obj.published:
         cp.pop("image")
-        cp.pop("hall_id")
         obj.update(cp)
         if industries:
             obj.industries.clear()
@@ -146,7 +155,7 @@ def update(id: int):
 def destroy(id: int):
     ut.check_role("organizer")
     obj = db.session.scalar(_base_select.filter(Fair.id == id))
-    if obj:
+    if obj and not obj.published:
         db.session.delete(obj)
         db.session.commit()
     return {}, 200

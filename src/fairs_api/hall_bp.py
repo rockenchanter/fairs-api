@@ -27,7 +27,13 @@ def hall_params():
             }
 
 
-@bp.get("/")
+@bp.get("/cities")
+def get_cities():
+    data = db.session.execute(db.select(Hall.city).group_by(Hall.city)).all()
+    return {"cities": [r.city for r in data]}, 200
+
+
+@bp.get("")
 def index():
     select = db.select(Hall).outerjoin(Hall.images).outerjoin(
             Hall.fairs).options(

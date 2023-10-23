@@ -46,7 +46,7 @@ def make_companies(app, company_params, industry_params):
 
 
 def test_index_without_filters(client, make_companies):
-    res = client.get("/companies/")
+    res = client.get("/companies")
     data = json.loads(res.data)
 
     assert res.status_code == 200
@@ -60,7 +60,7 @@ def test_index_without_filters(client, make_companies):
     ({"name": "Company 0", "city": "Jarosław"}, 1),
 ])
 def test_index_with_parameters(client, params, expected, make_companies):
-    response = client.get("/companies/", query_string=params)
+    response = client.get("/companies", query_string=params)
     data = json.loads(response.data)
 
     assert response.status_code == 200

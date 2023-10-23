@@ -17,7 +17,7 @@
         "min_children": "Must pick at least {}",
         "max_children": "Must pick at most {}",
         "incorrect_date": "Date is missing or format is invalid",
-        "hall_unavailable": "Unavailable at specified date"
+        "hall_unavailable": "Hall in unavailable at specified date"
     },
 
     "pl": {

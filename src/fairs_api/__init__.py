@@ -5,6 +5,7 @@ import os
 from .models import db, Administrator
 from .validations import get_from_locale
 from . import config
+from .seed import seed_db
 
 migrate = Migrate(db=db)
 
@@ -104,4 +105,7 @@ def create_app(mode="development"):
     app.register_blueprint(company)
     app.register_blueprint(address)
     app.register_blueprint(fair)
+
+    # register click commands
+    app.cli.add_command(seed_db)
     return app

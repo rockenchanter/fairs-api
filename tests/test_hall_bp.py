@@ -7,7 +7,7 @@ pytestmark = pytest.mark.usefixtures("clean_db")
 
 
 def test_index_without_parameters(client, make_halls):
-    response = client.get("/halls/")
+    response = client.get("/halls")
     data = json.loads(response.data)
 
     assert response.status_code == 200
@@ -23,7 +23,7 @@ def test_index_without_parameters(client, make_halls):
     ({"start": date(2023, 1, 3), "end": date(2023, 1, 20)}, 1),
 ])
 def test_index_with_parameters(client, params, expected, make_halls):
-    response = client.get("/halls/", query_string=params)
+    response = client.get("/halls", query_string=params)
     data = json.loads(response.data)
 
     assert response.status_code == 200
