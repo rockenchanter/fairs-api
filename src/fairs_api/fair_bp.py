@@ -3,7 +3,7 @@ from werkzeug.exceptions import NotFound
 from sqlalchemy.orm import contains_eager
 import datetime
 
-from .models import Fair, Hall, Industry, db
+from .models import Fair, FairProxy, Hall, Industry, Company, FairProxyStatus, db
 from . import utils as ut
 
 
@@ -16,10 +16,10 @@ _base_select = db.select(Fair).\
     outerjoin(Fair.fair_proxies).\
     order_by(Fair.start).\
     options(
-    contains_eager(Fair.organizer),
-    contains_eager(Fair.hall).contains_eager(Hall.stalls),
-    contains_eager(Fair.industries),
-    contains_eager(Fair.fair_proxies)
+        contains_eager(Fair.organizer),
+        contains_eager(Fair.hall).contains_eager(Hall.stalls),
+        contains_eager(Fair.industries),
+        contains_eager(Fair.fair_proxies)
 )
 
 
@@ -71,15 +71,23 @@ def fair_params():
 def index():
     select = _base_select.filter(Fair.published)
 
-    if (name_arg := request.args.get("name", None)) is not None:
-        select = select.filter(Fair.name.like(f"%{name_arg}"))
-    if (city_arg := request.args.get("city", None)) is not None:
+    if name_arg := request.args.get("name", None):
+        select = select.filter(Fair.name.like(f"%{name_arg}%"))
+    if city_arg := request.args.get("city", None):
         select = select.filter(Hall.city == city_arg)
+
+    if cid := request.args.get("company_id", None):
+        select = select.filter(db.and_(
+            FairProxy.company_id == cid,
+            FairProxy.status == FairProxyStatus.ACCEPTED
+        ))
 
     s = request.args.get("start", None)
 
     if s:
         select = select.filter(Fair.start >= s)
+
+    print(select)
 
     data = db.session.scalars(select).unique().all()
     data = [insert_stalls(obj.hall, obj.serialize()) for obj in data]
@@ -96,7 +104,13 @@ def show(id: int):
     elif obj.published is False and obj.organizer_id != session.get("user_id", None):
         raise NotFound
     else:
-        return {"fair": insert_stalls(obj.hall, obj.serialize())}, 200
+        ret = insert_stalls(obj.hall, obj.serialize())
+        for i in range(len(obj.fair_proxies)):
+            fp = obj.fair_proxies[i]
+            cmpny = fp.company.serialize()
+            ret["fair_proxies"][i]["company"] = cmpny
+        print(ret)
+        return {"fair": ret}, 200
 
 
 @bp.post("/create")
@@ -104,9 +118,9 @@ def new():
     ut.check_role("organizer")
     obj_par = fair_params()
     hall_valid = hall_available(
-            obj_par["hall_id"],
-            obj_par["start"],
-            obj_par["end"])
+        obj_par["hall_id"],
+        obj_par["start"],
+        obj_par["end"])
     obj = Fair(**obj_par)
     obj.organizer_id = session["user_id"]
 

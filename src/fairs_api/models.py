@@ -1,7 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from typing_extensions import Annotated
 from typing import List, Optional
-from sqlalchemy import event
+from sqlalchemy import event, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship, DeclarativeBase
 from sqlalchemy.ext.associationproxy import association_proxy, AssociationProxy
 from sqlalchemy import func, Column, ForeignKey
@@ -15,27 +15,29 @@ from .utils import delete_file
 
 
 class Base(DeclarativeBase):
+    """Base class for all models
+
+    Provides:
+        * method serializing objects to json
+        * validation system
+        * method for updating attributes
+    """
+
     @property
     def errors(self):
         return self._errors
 
     def localize_errors(self, locale: str = "en") -> dict:
+        """Replaces error dictionary with localized messages"""
         errors = {}
 
         for key, error_list in self._errors.items():
             data = error_list[0]
             errors[key] = va.get_from_locale(data[0], locale).format(*data[1:])
-
-            # return only one error for each field uncomment lines below and
-            # comment above ones if you want to return all errors
-
-            # errors[key] = [
-            #         va.get_from_locale(data[0], locale).format(*data[1:])
-            #         for data in error_list
-            #     ]
         return errors
 
     def add_errors_or_skip(self, field: str, error_msgs: list):
+        """Adds error to dictionary when validation fails"""
         for error in error_msgs:
             if error is not None:
                 if field not in self._errors.keys():
@@ -45,24 +47,32 @@ class Base(DeclarativeBase):
                     self._errors[field].append(error)
 
     def add_error(self, field, error_key):
+        """Manually add error to dictionary without running any validation"""
         if field not in self._errors.keys():
             self._errors[field] = []
         self._errors[field].append([error_key])
 
     def update(self, params: dict) -> None:
+        """Update object attributes
+
+        It skips any attribute that does not belong to specified class
+        """
         for key, value in params.items():
             if hasattr(self, key):
                 setattr(self, key, value)
 
     def is_valid(self) -> bool:
+        """Runs all validations"""
         self._errors = {}
         self._validate()
         return len(self._errors.keys()) == 0
 
     def _validate(self):
+        """Use this method to add validations"""
         pass
 
     def __delete__(self):
+        """Run on 'after_delete' sqlalchemy hook"""
         pass
 
     def serialize(self, include_relationships: bool = True) -> dict:
@@ -73,9 +83,10 @@ class Base(DeclarativeBase):
 
         """
         props = self.__dict__.copy()
-        props.pop('_sa_instance_state')
-        props.pop('_errors', None)
+        props.pop('_sa_instance_state')  # Unserializable
+        props.pop('_errors', None)  # Errors need to be localized anyway
         keys_to_delete = []
+
 
         # Although password is stored as hash, there's no need to send it
         if isinstance(self, User):
@@ -115,7 +126,6 @@ fair_industry = db.Table(
 )
 
 
-# fields like "logo", "image" are just paths
 class NotificationKind(enum.IntEnum):
     NEW_INVITATION = 0
     NEW_REQUEST = 1
@@ -439,7 +449,6 @@ class Notification(db.Model):
 
 
 class FairProxy(db.Model):
-    id: Mapped[intpk]
     status: Mapped["FairProxyStatus"]
     invitation: Mapped[bool] = mapped_column(default=True)
     # mappings
@@ -456,9 +465,12 @@ class FairProxy(db.Model):
     fair: Mapped["Fair"] = relationship(back_populates="fair_proxies")
     stall: Mapped[Optional["Stall"]] = relationship(back_populates="proxies")
 
+    def _validate(self):
+        self.add_errors_or_skip("company_id", [va.min(self.company_id, 1)])
+        self.add_errors_or_skip("fair_id", [va.min(self.fair_id, 1)])
+
 
 def before_delete(mapper, connection, target):
-    print(target)
     target.__delete__()
 
 

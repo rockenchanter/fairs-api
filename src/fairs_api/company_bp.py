@@ -52,9 +52,17 @@ def index():
     if ccity := a.get("city", None):
         stmt = stmt.filter(Company.addresses.any(
             Address.city.like(f"%{ccity}%")))
-    if cind := a.get("industry_id", None):
-        stmt = stmt.filter(Company.industries.any(Industry.id == cind))
-
+    if cind := a.get("industry", None):
+        fd = cind.split(",")
+        industries_ids = [int(x.strip()) for x in fd]
+        stmt = stmt.filter(Industry.id.in_(industries_ids))
+    if cid := a.get("id", None):
+        fd = cid.split(",")
+        ids = [int(x.strip()) for x in fd]
+        stmt = stmt.filter(Company.id.in_(ids))
+    if uid := a.get("exhibitor_id", None):
+        uid = int(uid)
+        stmt = stmt.filter(Company.exhibitor_id == uid)
     data = db.session.scalars(stmt).unique().all()
     return {"companies": [c.serialize(True) for c in data]}, 200
 

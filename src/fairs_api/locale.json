@@ -17,7 +17,9 @@
         "min_children": "Must pick at least {}",
         "max_children": "Must pick at most {}",
         "incorrect_date": "Date is missing or format is invalid",
-        "hall_unavailable": "Hall in unavailable at specified date"
+        "hall_unavailable": "Hall in unavailable at specified date",
+        "invitation_exists": "Invitation has been sent already",
+        "stall_unavailable": "Specified stall is unavailable"
     },
 
     "pl": {
@@ -38,6 +40,8 @@
         "min_children": "Musisz zaznaczyć co najmniej {} opcję",
         "max_children": "Możesz zaznaczyć co najwyżej {} opcję",
         "incorrect_date": "Format daty się nie zgadza lub ich nie podano",
-        "hall_unavailable": "Hala niedostępna w wybranym przedziale czasowym"
+        "hall_unavailable": "Hala niedostępna w wybranym przedziale czasowym",
+        "invitation_exists": "Zaproszenie zostało już wysłane",
+        "stall_unavailable": "Wybrane stoisko jest niedostępne"
     }
 }
