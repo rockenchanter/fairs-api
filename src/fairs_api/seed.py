@@ -323,7 +323,7 @@ def create_companies():
 def create_halls():
     halls = []
 
-    for idx in range(100):
+    for idx in range(20):
         hall = {
             "parking": random.choice([True, False]),
             "internet": random.choice([True, False]),
