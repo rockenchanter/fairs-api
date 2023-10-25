@@ -98,6 +98,7 @@ def create_app(mode="development"):
     from .company_bp import bp as company
     from .address_bp import bp as address
     from .fair_bp import bp as fair
+    from .proxy_bp import bp as proxy
     app.register_blueprint(auth)
     app.register_blueprint(hall)
     app.register_blueprint(image)
@@ -105,6 +106,7 @@ def create_app(mode="development"):
     app.register_blueprint(company)
     app.register_blueprint(address)
     app.register_blueprint(fair)
+    app.register_blueprint(proxy)
 
     # register click commands
     app.cli.add_command(seed_db)

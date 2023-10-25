@@ -67,8 +67,11 @@ def get_str(key: str) -> str:
     return request.form.get(key, "").strip()
 
 
-def check_role(role: str) -> None:
-    if session.get("user_role", None) != role:
+def check_role(role: str | list) -> None:
+    urole = session.get("user_role", None)
+    if isinstance(role, list) and urole not in role:
+        raise Forbidden
+    elif isinstance(role, str) and urole != role:
         raise Forbidden
 
 

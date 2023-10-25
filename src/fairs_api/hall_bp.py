@@ -3,7 +3,7 @@ from werkzeug.exceptions import NotFound
 from sqlalchemy.orm import contains_eager
 from sqlalchemy import and_, update
 
-from .models import Hall, Fair, db
+from .models import Hall, Fair, Stall, db
 from .utils import get_checkbox, get_int, get_str, check_role
 
 
@@ -33,6 +33,15 @@ def get_cities():
     return {"cities": [r.city for r in data]}, 200
 
 
+@bp.get("/stalls")
+def get_stalls():
+    hid = int(request.args.get("hall_id", 0))
+    data = db.session.\
+        scalars(
+            db.select(Stall).filter(Stall.hall_id == hid)).all()
+    return {"stalls": [s.serialize(False) for s in data]}, 200
+
+
 @bp.get("")
 def index():
     select = db.select(Hall).outerjoin(Hall.images).outerjoin(
@@ -42,7 +51,7 @@ def index():
                 )
 
     if (name_arg := request.args.get("name", None)) is not None:
-        select = select.filter(Hall.name.like(f"%{name_arg}"))
+        select = select.filter(Hall.name.like(f"%{name_arg}%"))
     if request.args.get("parking", None):
         select = select.filter(Hall.parking)
     if request.args.get("internet", None):
