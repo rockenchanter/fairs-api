@@ -37,7 +37,7 @@ def create_root_user(app):
             surname="Admin",
             email=app.config["ADMIN_EMAIL"],
             password=app.config["ADMIN_PASSWORD"],
-            image="assets/admin.jpg"
+            image="/assets/admin.jpg"
             )
         adm.make_password_hash()
         db.session.add(adm)

@@ -1,4 +1,4 @@
-from flask import Blueprint, session
+from flask import Blueprint, session, request
 
 from werkzeug.exceptions import NotFound
 from sqlalchemy.exc import IntegrityError
@@ -13,12 +13,7 @@ _base_select = db.select(FairProxy).\
     options(
         contains_eager(FairProxy.company),
         contains_eager(FairProxy.fair),
-        contains_eager(FairProxy.stall)).\
-    filter(db.or_(
-        FairProxy.status == FairProxyStatus.SENT,
-        db.and_(FairProxy.status == FairProxyStatus.ACCEPTED,
-                FairProxy.stall_id == None)))
-
+        contains_eager(FairProxy.stall))
 bp = Blueprint("invitations", __name__, url_prefix="/invitations")
 
 
@@ -34,12 +29,18 @@ def index():
     uid = int(session.get("user_id", 0))
     role = session.get("user_role", None)
 
+    stmt = _base_select.\
+        filter(db.or_(
+            FairProxy.status == FairProxyStatus.SENT,
+            db.and_(FairProxy.status == FairProxyStatus.ACCEPTED,
+                    FairProxy.stall_id == None)))
+
     if not role:
         return {"invitations": []}, 200
     elif role == "organizer":
-        stmt = _base_select.filter(Fair.organizer_id == uid)
+        stmt = stmt.filter(Fair.organizer_id == uid)
     else:
-        stmt = _base_select.filter(Company.exhibitor_id == uid)
+        stmt = stmt.filter(Company.exhibitor_id == uid)
 
     ret = []
     for x in db.session.scalars(stmt).unique().all():
@@ -65,9 +66,9 @@ def new():
             return {"invitation": dt}, 201
         except IntegrityError as e:
             print(e)
-            obj.add_error("generic", "invitation_exists")
+            obj.add_error("invitation", "invitation_exists")
     errors = obj.localize_errors(session["locale"])
-    return {"errors": {"invitation": errors}}, 422
+    return {"errors": errors}, 422
 
 
 @bp.patch("")
@@ -100,14 +101,24 @@ def update():
     raise NotFound
 
 
-@bp.delete("/<int:id>")
-def destroy(id: int):
+@bp.delete("")
+def destroy():
     ut.check_role(["exhibitor", "organizer"])
-    stmt = db.select(_base_select.filter(FairProxy.id == id))
-    obj = db.session.scalar(stmt)
+    cid = int(request.args.get("company_id", 0))
+    fid = int(request.args.get("fair_id", 0))
+    obj = db.session.\
+        scalar(_base_select.
+               filter(FairProxy.company_id == cid).
+               filter(FairProxy.fair_id == fid))
+
+    print(f"{cid} {fid} {obj}")
     uid = session["user_id"]
     if obj and (obj.company.exhibitor_id == uid or
                 obj.fair.organizer_id == uid):
+        if (obj.stall_id):
+            stall = db.session.get(Stall, obj.stall_id)
+            if stall:
+                stall.amount += 1
         db.session.delete(obj)
-    db.session.commit()
+        db.session.commit()
     return {}, 200

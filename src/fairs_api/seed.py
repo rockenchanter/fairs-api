@@ -330,8 +330,8 @@ def create_halls():
             "dissability": random.choice([True, False]),
             "pets": random.choice([True, False]),
             "public": True,
-            "size": random.uniform(100.0, 1000.0),
-            "price": round(random.uniform(500.0, 5000.0), 2),
+            "size": random.randint(300, 1500),
+            "price": random.randint(500, 5000),
             "city": random.choice(cities),
             "street": fake.street_address(),
             "zipcode": fake.postcode(),
@@ -348,7 +348,7 @@ def create_halls():
             amt = int(random.uniform(1, 20))
             hall.stalls.append(
                 Stall(
-                    size=random.uniform(5.0, 20.0),
+                    size=random.randint(2, 20),
                     electricity=random.choice([True, False]),
                     network=random.choice([True, False]),
                     support=random.choice([True, False]),

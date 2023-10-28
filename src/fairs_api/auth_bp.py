@@ -4,6 +4,7 @@ from werkzeug.security import check_password_hash
 from sqlalchemy.exc import IntegrityError
 
 from . import models as md
+from .company_bp import _base_select
 from .utils import store_file, get_filename
 from .models import db
 
@@ -37,15 +38,30 @@ def register_params():
     }
 
 
+def plug_company(params: dict, eid: int) -> dict:
+    ret = params.copy()
+    company = db.session.scalar(
+            _base_select.filter(md.Company.exhibitor_id == eid))
+    if company:
+        ret["company"] = company.serialize()
+    return ret
+
+
 @bp.post("/login")
 def login():
     params = login_params()
-    stmt = db.select(md.User).where(md.User.email == params["email"])
+    if "user_id" in session:
+        stmt = db.select(md.User).where(md.User.id == session.get("user_id"))
+    else:
+        stmt = db.select(md.User).where(md.User.email == params["email"])
     user = db.session.scalar(stmt)
     if user is not None and check_password_hash(
             user.password, params["password"]):
         save_user_in_session(user)
-        return {"user": user.serialize(False)}
+        ret = user.serialize(False)
+        if user.role == "exhibitor":
+            ret = plug_company(ret, user.id)
+        return {"user": ret}
     else:
         raise Unauthorized
 
@@ -65,7 +81,10 @@ def authenticate():
     if "user_id" in session:
         user = db.session.get(md.User, session["user_id"])
         if user:
-            ret["user"] = user.serialize(False)
+            usr = user.serialize(False)
+            if user.role == "exhibitor":
+                usr = plug_company(usr, user.id)
+            ret["user"] = usr
         else:
             remove_user_from_session()
     return ret, 200

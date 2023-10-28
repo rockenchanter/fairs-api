@@ -69,13 +69,21 @@ def fair_params():
 
 @bp.get("")
 def index():
-    select = _base_select.filter(Fair.published)
+    usr_role = session.get("user_role", None)
+    if usr_role == "organizer":
+        select = _base_select
+    else:
+        select = _base_select.filter(Fair.published)
 
     if name_arg := request.args.get("name", None):
         select = select.filter(Fair.name.like(f"%{name_arg}%"))
     if city_arg := request.args.get("city", None):
         select = select.filter(Hall.city == city_arg)
 
+    if hid := request.args.get("hall_id", None):
+        select = select.filter(Hall.id == int(hid))
+    if uid := request.args.get("organizer_id", None):
+        select = select.filter(Fair.organizer_id == int(uid))
     if cid := request.args.get("company_id", None):
         select = select.filter(db.and_(
             FairProxy.company_id == cid,
@@ -86,8 +94,6 @@ def index():
 
     if s:
         select = select.filter(Fair.start >= s)
-
-    print(select)
 
     data = db.session.scalars(select).unique().all()
     data = [insert_stalls(obj.hall, obj.serialize()) for obj in data]
@@ -109,7 +115,6 @@ def show(id: int):
             fp = obj.fair_proxies[i]
             cmpny = fp.company.serialize()
             ret["fair_proxies"][i]["company"] = cmpny
-        print(ret)
         return {"fair": ret}, 200
 
 
