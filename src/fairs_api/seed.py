@@ -352,8 +352,7 @@ def create_halls():
                     electricity=random.choice([True, False]),
                     network=random.choice([True, False]),
                     support=random.choice([True, False]),
-                    image=f"/assets/stall_{
-                        random.choice(range(1, 6))}.jpg",
+                    image=f"/assets/stall_{random.choice(range(1, 6))}.jpg",
                     amount=amt,
                     max_amount=amt
                 ))
