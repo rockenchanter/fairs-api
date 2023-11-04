@@ -6,8 +6,16 @@ from .models import db, Administrator
 from .validations import get_from_locale
 from . import config
 from .seed import seed_db
+from .api import hall
 
 migrate = Migrate(db=db)
+
+
+def register_api(app, item_api, group_api, name: str):
+    api_group = group_api.as_view(f"{name}-group")
+    api_item = item_api.as_view(f"{name}-item")
+    app.add_url_rule(f"/{name}", view_func=api_group)
+    app.add_url_rule(f"/{name}/<int:id>", view_func=api_item)
 
 
 def handle_400(exc):
@@ -92,7 +100,6 @@ def create_app(mode="development"):
 
     # register blueprints
     from .auth_bp import bp as auth
-    from .hall_bp import bp as hall
     from .image_bp import bp as image
     from .stall_bp import bp as stall
     from .company_bp import bp as company
@@ -100,13 +107,15 @@ def create_app(mode="development"):
     from .fair_bp import bp as fair
     from .proxy_bp import bp as proxy
     app.register_blueprint(auth)
-    app.register_blueprint(hall)
     app.register_blueprint(image)
     app.register_blueprint(stall)
     app.register_blueprint(company)
     app.register_blueprint(address)
     app.register_blueprint(fair)
     app.register_blueprint(proxy)
+
+    # register apis
+    register_api(app, hall.HallAPI, hall.HallListAPI, "halls")
 
     # register click commands
     app.cli.add_command(seed_db)

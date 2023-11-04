@@ -11,7 +11,7 @@ def test_index_without_parameters(client, make_halls):
     data = json.loads(response.data)
 
     assert response.status_code == 200
-    assert len(data["halls"]) == 5
+    assert len(data) == 5
 
 
 @pytest.mark.parametrize("params,expected", [
@@ -27,7 +27,7 @@ def test_index_with_parameters(client, params, expected, make_halls):
     data = json.loads(response.data)
 
     assert response.status_code == 200
-    assert len(data["halls"]) == expected
+    assert len(data) == expected
 
 
 @pytest.mark.parametrize("id", [1, 2, 3, 4, 5])
@@ -36,7 +36,7 @@ def test_show_with_existing_halls(client, id, make_halls):
     data = json.loads(response.data)
 
     assert response.status_code == 200
-    assert "hall" in data
+    assert "id" in data
 
 
 def test_show_with_non_existing_hall(client):
@@ -65,7 +65,7 @@ def test_delete_with_existing_hall_without_permissions(
 def test_create_with_valid_data(auth, client, hall_params, create_user):
     data = create_user({"role": "administrator"})
     auth.login(data["email"], data["password"])
-    response = client.post("/halls/create", data=hall_params)
+    response = client.post("/halls", data=hall_params)
     data = json.loads(response.data)
 
     assert response.status_code == 201
@@ -74,7 +74,7 @@ def test_create_with_valid_data(auth, client, hall_params, create_user):
 
 def test_create_with_valid_data_without_permissions(auth, client, hall_params):
     auth.login("jane@email.com", "Test1234")
-    response = client.post("/halls/create", data=hall_params)
+    response = client.post("/halls", data=hall_params)
 
     assert response.status_code == 403
 
@@ -84,14 +84,14 @@ def test_create_with_invalid_data(auth, client, hall_params, create_user):
     auth.login(data["email"], data["password"])
     cp = hall_params.copy()
     cp["size"] = -1
-    response = client.post("/halls/create", data=cp)
+    response = client.post("/halls", data=cp)
     data = json.loads(response.data)
 
     assert response.status_code == 422
     assert len(data["errors"]["size"]) > 0
 
 
-def test_update_with_valid_data(auth, client, hall_params, create_user):
+def test_update_with_valid_data(auth, client, hall_params, create_user, make_halls):
     data = create_user({"role": "administrator"})
     auth.login(data["email"], data["password"])
     cp = hall_params.copy()
@@ -102,7 +102,7 @@ def test_update_with_valid_data(auth, client, hall_params, create_user):
     assert response.status_code == 200
 
 
-def test_update_with_valid_data_without_permission(auth, client, hall_params):
+def test_update_with_valid_data_without_permission(auth, client, hall_params, make_halls):
     auth.login("jane@email.com", "Test1234")
     cp = hall_params.copy()
     cp["size"] = 9999
@@ -112,7 +112,7 @@ def test_update_with_valid_data_without_permission(auth, client, hall_params):
     assert response.status_code == 403
 
 
-def test_update_with_invalid_data(auth, client, hall_params, create_user):
+def test_update_with_invalid_data(auth, client, hall_params, create_user, make_halls):
     data = create_user({"role": "administrator"})
     auth.login(data["email"], data["password"])
     cp = hall_params.copy()
