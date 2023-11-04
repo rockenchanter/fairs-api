@@ -93,7 +93,8 @@ class ListAPI(MethodView):
                 db.session.commit()
                 self._after_commit()
                 return ret, 201
-            except IntegrityError:
+            except IntegrityError as e:
+                print(e)
                 self._on_integrity_error()
         errors = obj.localize_errors(session.get("locale", "en"))
         return {"errors": errors}, 422

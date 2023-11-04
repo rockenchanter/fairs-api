@@ -1,11 +1,11 @@
-from werkzeug.datastructures import FileStorage
 from werkzeug.exceptions import Forbidden
 from flask import current_app, request, session
 import os
 import datetime
 
 
-def get_filename(file: FileStorage) -> str:
+def get_filename(key: str) -> str:
+    file = request.files.get(key, None)
     if file:
         assets_dir = current_app.config["ASSETS_DIR"]
         files_in_assets = len(os.listdir(assets_dir))
@@ -17,7 +17,8 @@ def get_filename(file: FileStorage) -> str:
             sfn = os.path.join(assets_dir, f"file_{files_in_assets}{ext}")
 
         base = f"file_{files_in_assets}{ext}"
-        return [base, f"/{os.path.basename(os.path.normpath(assets_dir))}/{base}"]
+        return [
+            base, f"/{os.path.basename(os.path.normpath(assets_dir))}/{base}"]
     return [None, None]
 
 
@@ -26,7 +27,7 @@ def store_file(key: str, mimetype_frag: str) -> None:
     assets_dir = current_app.config["ASSETS_DIR"]
     if mimetype_frag not in file.mimetype:
         raise ValueError
-    fn = get_filename(file)[0]
+    fn = get_filename(key)[0]
     fn = os.path.join(assets_dir, fn)
     file.save(fn)
 

@@ -110,8 +110,6 @@ def destroy():
         scalar(_base_select.
                filter(FairProxy.company_id == cid).
                filter(FairProxy.fair_id == fid))
-
-    print(f"{cid} {fid} {obj}")
     uid = session["user_id"]
     if obj and (obj.company.exhibitor_id == uid or
                 obj.fair.organizer_id == uid):

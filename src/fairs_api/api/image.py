@@ -1,6 +1,3 @@
-
-from flask import request
-
 from fairs_api.models import db, Image
 from fairs_api import utils as ut
 
@@ -12,7 +9,7 @@ BASE_STMT = db.select(Image)
 
 def image_params():
     return {
-        "path": ut.get_filename(request.files.get("path", None))[1],
+        "path": ut.get_filename("path")[1],
         "description": ut.get_str("description"),
         "hall_id": ut.get_int("hall_id", 0)
     }

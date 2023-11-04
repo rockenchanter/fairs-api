@@ -333,6 +333,7 @@ class Company(DescribableMixin, db.Model):
 
     def _validate(self):
         self.add_errors_or_skip("name", [va.min_length(self.name, 1)])
+        self.add_errors_or_skip("exhibitor_id", [va.min(self.exhibitor_id, 1)])
         self.add_errors_or_skip(
             "description", [va.min_length(self.description, 1)])
         self.add_errors_or_skip("image", [va.min_length(self.image, 1)])
@@ -397,6 +398,7 @@ class Image(db.Model):
 
     def _validate(self):
         self.add_errors_or_skip("path", [va.min_length(self.path, 1)])
+        self.add_errors_or_skip("hall_id", [va.min(self.hall_id, 1)])
         self.add_errors_or_skip(
             "description", [va.min_length(self.description, 1)])
 
@@ -429,6 +431,7 @@ class Stall(db.Model):
     def _validate(self):
         self.add_errors_or_skip("size", [va.min(self.size, 1)])
         self.add_errors_or_skip("amount", [va.min(self.amount, 0)])
+        self.add_errors_or_skip("hall_id", [va.min(self.hall_id, 1)])
         self.add_errors_or_skip("max_amount", [va.min(self.max_amount, 1)])
         self.add_errors_or_skip("image", [va.min_length(self.image, 1)])
 
