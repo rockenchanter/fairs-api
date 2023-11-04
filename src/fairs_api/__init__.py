@@ -6,7 +6,7 @@ from .models import db, Administrator
 from .validations import get_from_locale
 from . import config
 from .seed import seed_db
-from .api import hall
+from .api import hall, address
 
 migrate = Migrate(db=db)
 
@@ -103,19 +103,18 @@ def create_app(mode="development"):
     from .image_bp import bp as image
     from .stall_bp import bp as stall
     from .company_bp import bp as company
-    from .address_bp import bp as address
     from .fair_bp import bp as fair
     from .proxy_bp import bp as proxy
     app.register_blueprint(auth)
     app.register_blueprint(image)
     app.register_blueprint(stall)
     app.register_blueprint(company)
-    app.register_blueprint(address)
     app.register_blueprint(fair)
     app.register_blueprint(proxy)
 
     # register apis
     register_api(app, hall.HallAPI, hall.HallListAPI, "halls")
+    register_api(app, address.AddressAPI, address.AddressListAPI, "addresses")
 
     # register click commands
     app.cli.add_command(seed_db)

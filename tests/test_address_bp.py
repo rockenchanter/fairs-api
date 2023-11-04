@@ -16,7 +16,7 @@ def test_create(auth, client, create_user, address_params):
     dt["company_id"] = 1
     dt["exhibitor_id"] = data["id"]
 
-    response = client.post("/addresses/create", data=dt)
+    response = client.post("/addresses", data=dt)
     assert response.status_code == 201
 
 
