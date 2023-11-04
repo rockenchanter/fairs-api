@@ -21,7 +21,8 @@ def get_filename(file: FileStorage) -> str:
     return [None, None]
 
 
-def store_file(file: FileStorage, mimetype_frag: str) -> None:
+def store_file(key: str, mimetype_frag: str) -> None:
+    file = request.files[key]
     assets_dir = current_app.config["ASSETS_DIR"]
     if mimetype_frag not in file.mimetype:
         raise ValueError

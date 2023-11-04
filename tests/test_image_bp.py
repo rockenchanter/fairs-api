@@ -13,7 +13,7 @@ def test_create(auth, client, create_user, image_params):
     dt["path"] = (open(image, "rb"), "image.jpg", "image/jpeg")
     dt["hall_id"] = 1
 
-    response = client.post("/images/create", data=dt)
+    response = client.post("/images", data=dt)
     assert response.status_code == 201
 
 

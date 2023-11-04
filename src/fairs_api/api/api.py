@@ -76,6 +76,12 @@ class ListAPI(MethodView):
         """Primary used to check permissions"""
         ut.check_role(self.role)
 
+    def _after_commit(self):
+        pass
+
+    def _store_file(self, key: str, mimetype: str):
+        ut.store_file(key, mimetype)
+
     def post(self):
         self._before_post()
         obj = self.model(**self._create_params())
@@ -85,6 +91,7 @@ class ListAPI(MethodView):
                 db.session.flush()
                 ret = obj.serialize()
                 db.session.commit()
+                self._after_commit()
                 return ret, 201
             except IntegrityError:
                 self._on_integrity_error()
