@@ -50,13 +50,13 @@ def test_index_without_filters(client, make_companies):
     data = json.loads(res.data)
 
     assert res.status_code == 200
-    assert len(data["companies"]) == 5
+    assert len(data) == 5
 
 
-@ pytest.mark.parametrize("params,expected", [
+@pytest.mark.parametrize("params,expected", [
     ({"city": "Rzeszów"}, 2),
     ({"name": "Company 0", "city": "Rzeszów"}, 1),
-    ({"city": "Jarosław", "industry_id": 2}, 0),
+    ({"city": "Jarosław", "industry": 12}, 0),
     ({"name": "Company 0", "city": "Jarosław"}, 1),
 ])
 def test_index_with_parameters(client, params, expected, make_companies):
@@ -64,15 +64,13 @@ def test_index_with_parameters(client, params, expected, make_companies):
     data = json.loads(response.data)
 
     assert response.status_code == 200
-    assert len(data["companies"]) == expected
+    assert len(data) == expected
 
 
 def test_show_with_existing_company(client, make_companies):
     response = client.get("/companies/1")
-    data = json.loads(response.data)
 
     assert response.status_code == 200
-    assert "company" in data
 
 
 def test_show_with_non_existing_company(client):
@@ -92,12 +90,8 @@ def test_create(client, auth, company_params, address_params, create_user, make_
                       "resources/face.jpg")
     body["image"] = (open(image, "rb"), "image.jpg", "image/jpeg")
     body["industry"] = "1,2,3"
-    res = client.post("/companies/create", data=body)
-    data = json.loads(res.data)
-
-    print(data)
+    res = client.post("/companies", data=body)
     assert res.status_code == 201
-    assert "company" in data
 
 
 def test_update(client, auth, company_params, create_user, make_industries, make_companies):
@@ -107,11 +101,7 @@ def test_update(client, auth, company_params, create_user, make_industries, make
     body["exhibitor_id"] = usr["id"]
 
     res = client.patch("/companies/1", data=body)
-    data = json.loads(res.data)
-
-    print(data)
     assert res.status_code == 200
-    assert "company" in data
 
 
 def test_destroy(client, auth, create_user, make_industries, make_companies):

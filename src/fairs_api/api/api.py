@@ -18,10 +18,12 @@ class API(MethodView):
     def _before_patch(self, obj):
         """Primary used to check permissions"""
         ut.check_role(self.role)
+        self._check_ownership(obj)
 
     def _before_delete(self, obj):
         """Primary used to check permissions"""
         ut.check_role(self.role)
+        self._check_ownership(obj)
 
     def _create_params(self) -> dict:
         pass
@@ -61,6 +63,9 @@ class API(MethodView):
             return ret, 200
         errors = obj.localize_errors(session.get("locale", "en"))
         return {"errors": errors}, 422
+
+    def _check_ownership(self, obj) -> None:
+        pass
 
     def delete(self, id: int):
         stmt = self.base_stmt.filter(self.model.id == id)
@@ -102,6 +107,9 @@ class ListAPI(MethodView):
     def _modify_obj(self, obj):
         pass
 
+    def _localize_errors(self, obj):
+        return obj.localize_errors(session.get("locale", "en"))
+
     def post(self):
         self._before_post()
         obj = self.model(**self._create_params())
@@ -118,7 +126,7 @@ class ListAPI(MethodView):
             except IntegrityError as e:
                 print(e)
                 self._on_integrity_error()
-        errors = obj.localize_errors(session.get("locale", "en"))
+        errors = self._localize_errors(obj)
         return {"errors": errors}, 422
 
     def get(self):
