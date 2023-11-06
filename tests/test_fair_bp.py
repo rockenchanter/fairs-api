@@ -43,7 +43,7 @@ def test_index_without_parameters(client, make_fairs):
     data = json.loads(res.data)
 
     assert res.status_code == 200
-    assert len(data["fairs"]) == 3
+    assert len(data) == 3
 
 
 @pytest.mark.parametrize("params,expected", [
@@ -58,7 +58,7 @@ def test_index_with_parameters(client, params, expected, make_fairs):
     data = json.loads(response.data)
 
     assert response.status_code == 200
-    assert len(data["fairs"]) == expected
+    assert len(data) == expected
 
 
 @pytest.mark.parametrize("id,status", [
@@ -71,11 +71,8 @@ def test_show(client, make_fairs, id, status, create_user, auth):
     user = create_user({"role": "organizer"})
     auth.login(user["email"], user["password"])
     response = client.get(f"/fairs/{id}")
-    data = json.loads(response.data)
 
     assert response.status_code == status
-    if status == 200:
-        assert "fair" in data
 
 
 def test_create(client, create_user, auth, fair_params, make_industries, make_halls):
@@ -89,11 +86,9 @@ def test_create(client, create_user, auth, fair_params, make_industries, make_ha
     fp["start"] = date(2050, 1, 10)
     fp["end"] = date(2050, 1, 15)
 
-    res = client.post("/fairs/create", data=fp)
-    data = json.loads(res.data)
+    res = client.post("/fairs", data=fp)
 
     assert res.status_code == 201
-    assert "fair" in data
 
 
 def test_update(client, create_user, auth, fair_params, make_fairs, make_industries):
@@ -106,10 +101,8 @@ def test_update(client, create_user, auth, fair_params, make_fairs, make_industr
     par["industry"] = "4,5,6"
 
     res = client.patch("/fairs/1", data=par)
-    data = json.loads(res.data)
 
     assert res.status_code == 200
-    assert "fair" in data
 
 
 def test_destroy(client, create_user, auth, make_fairs):
@@ -119,4 +112,3 @@ def test_destroy(client, create_user, auth, make_fairs):
     response = client.delete("/fairs/1")
 
     assert response.status_code == 200
-

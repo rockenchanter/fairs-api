@@ -19,7 +19,8 @@
         "incorrect_date": "Date is missing or format is invalid",
         "hall_unavailable": "Hall in unavailable at specified date",
         "invitation_exists": "Invitation has been sent already",
-        "stall_unavailable": "Specified stall is unavailable"
+        "stall_unavailable": "Specified stall is unavailable",
+        "not_modifiable": "Resource can not be modified"
     },
 
     "pl": {
@@ -42,6 +43,7 @@
         "incorrect_date": "Format daty się nie zgadza lub ich nie podano",
         "hall_unavailable": "Hala niedostępna w wybranym przedziale czasowym",
         "invitation_exists": "Zaproszenie zostało już wysłane",
-        "stall_unavailable": "Wybrane stoisko jest niedostępne"
+        "stall_unavailable": "Wybrane stoisko jest niedostępne",
+        "not_modifiable": "Nie można edytować tego zasobu"
     }
 }

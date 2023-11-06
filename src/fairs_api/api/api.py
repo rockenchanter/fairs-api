@@ -29,10 +29,20 @@ class API(MethodView):
     def _update_params(self) -> dict:
         return self._create_params()
 
+    def _validate(self, obj: db.Model) -> bool:
+        return obj.is_valid()
+
+    def _modify_obj(self, obj):
+        pass
+
+    def _before_get(self, obj):
+        pass
+
     def get(self, id: int):
         stmt = self.base_stmt.filter(self.model.id == id)
         obj = db.session.scalar(stmt)
         if obj:
+            self._before_get(obj)
             return obj.serialize(), 200
         raise NotFound
 
@@ -43,7 +53,8 @@ class API(MethodView):
             raise NotFound
         self._before_patch(obj)
         obj.update(self._update_params())
-        if obj.is_valid():
+        self._modify_obj(obj)
+        if self._validate(obj):
             db.session.add(obj)
             db.session.flush()
             ret = obj.serialize()
@@ -82,10 +93,21 @@ class ListAPI(MethodView):
     def _store_file(self, key: str, mimetype: str):
         ut.store_file(key, mimetype)
 
+    def _validate(self, obj: db.Model) -> bool:
+        return obj.is_valid()
+
+    def _before_validate(self):
+        pass
+
+    def _modify_obj(self, obj):
+        pass
+
     def post(self):
         self._before_post()
         obj = self.model(**self._create_params())
-        if obj.is_valid():
+        self._before_validate()
+        self._modify_obj(obj)
+        if self._validate(obj):
             try:
                 db.session.add(obj)
                 db.session.flush()
