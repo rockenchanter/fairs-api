@@ -82,7 +82,9 @@ class CompanyListAPI(ListAPI):
         self._store_file("image", "image")
 
     def _validate(self, obj):
-        return super()._validate(obj) and obj.addresses[0].is_valid()
+        obj_valid = super()._validate(obj)
+        addr_valid = obj.addresses[0].is_valid()
+        return obj_valid and addr_valid
 
     def _localize_errors(self, obj):
         cpmy_errors = super()._localize_errors(obj)

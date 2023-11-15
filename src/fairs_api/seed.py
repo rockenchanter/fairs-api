@@ -353,7 +353,6 @@ def create_halls():
                     network=random.choice([True, False]),
                     support=random.choice([True, False]),
                     image=f"/assets/stall_{random.choice(range(1, 6))}.jpg",
-                    amount=amt,
                     max_amount=amt
                 ))
 

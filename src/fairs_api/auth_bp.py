@@ -4,7 +4,6 @@ from werkzeug.security import check_password_hash
 from sqlalchemy.exc import IntegrityError
 
 from . import models as md
-from .company_bp import _base_select
 from .utils import store_file, get_filename
 from .models import db
 
@@ -38,15 +37,6 @@ def register_params():
     }
 
 
-def plug_company(params: dict, eid: int) -> dict:
-    ret = params.copy()
-    company = db.session.scalar(
-            _base_select.filter(md.Company.exhibitor_id == eid))
-    if company:
-        ret["company"] = company.serialize()
-    return ret
-
-
 @bp.post("/login")
 def login():
     params = login_params()
@@ -59,8 +49,6 @@ def login():
             user.password, params["password"]):
         save_user_in_session(user)
         ret = user.serialize(False)
-        if user.role == "exhibitor":
-            ret = plug_company(ret, user.id)
         return {"user": ret}
     else:
         raise Unauthorized
@@ -82,8 +70,6 @@ def authenticate():
         user = db.session.get(md.User, session["user_id"])
         if user:
             usr = user.serialize(False)
-            if user.role == "exhibitor":
-                usr = plug_company(usr, user.id)
             ret["user"] = usr
         else:
             remove_user_from_session()

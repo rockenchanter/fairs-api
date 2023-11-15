@@ -1,8 +1,8 @@
-from flask import Flask, session
+from flask import Flask, session, request
 from flask_migrate import Migrate, upgrade
 import os
 
-from .models import db, Administrator
+from .models import db, Administrator, Hall, Stall, FairProxy, FairProxyStatus
 from .validations import get_from_locale
 from . import config
 from .seed import seed_db
@@ -111,6 +111,33 @@ def create_app(mode="development"):
     register_api(app, stall.StallAPI, stall.StallListAPI, "stalls")
     register_api(app, fair.FairAPI, fair.FairListAPI, "fairs")
     register_api(app, company.CompanyAPI, company.CompanyListAPI, "companies")
+
+    # additional routes
+    @app.get("/halls/cities")
+    def get_cities():
+        data = db.session.execute(
+                db.select(Hall.city).group_by(Hall.city)).all()
+        return {"cities": [r.city for r in data]}, 200
+
+    @app.get("/halls/stalls")
+    def get_stalls():
+        stmt = db.select(Stall).outerjoin(Stall.proxies).outerjoin(FairProxy.fair).\
+                filter(Stall.hall_id == request.args.get("hall_id", 0))
+        data = db.session.scalars(stmt).all()
+        dset = []
+        fid = int(request.args.get("fair_id", 0))
+        for i in data:
+            obj = i.serialize()
+            available_slots = i.max_amount
+            for pxy in i.proxies:
+                if pxy.fair_id == fid:
+                    available_slots -= 1
+                    print(f"REDUCTION TO: {available_slots}")
+            obj["amount"] = available_slots
+            print(f"AFTER: {available_slots}")
+            dset.append(obj)
+
+        return dset, 200
 
     # register click commands
     app.cli.add_command(seed_db)

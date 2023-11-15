@@ -126,15 +126,6 @@ fair_industry = db.Table(
 )
 
 
-class NotificationKind(enum.IntEnum):
-    NEW_INVITATION = 0
-    NEW_REQUEST = 1
-    ACCEPTED_INVITATION = 2
-    REJECTED_INVITATION = 3
-    ACCEPTED_REQUEST = 4
-    REJECTED_REQUEST = 5
-
-
 class FairProxyStatus(enum.IntEnum):
     SENT = 0
     ACCEPTED = 1
@@ -157,12 +148,6 @@ class User(db.Model):
     image: Mapped[str]
 
     # mappings
-    notifications: Mapped["Notification"] = relationship(
-        back_populates="user",
-        cascade="all, delete",
-        passive_deletes=True
-    )
-
     __mapper_args__ = {
         "polymorphic_on": "role",
         "polymorphic_abstract": True
@@ -193,7 +178,7 @@ class Administrator(User):
 
 
 class Exhibitor(User):
-    company: Mapped["Company"] = relationship(
+    companies: Mapped[List["Company"]] = relationship(
         back_populates="exhibitor",
         cascade="all, delete",
         passive_deletes=True
@@ -311,7 +296,7 @@ class Company(DescribableMixin, db.Model):
     exhibitor_id: Mapped[int] = mapped_column(
         ForeignKey("user.id", ondelete="CASCADE")
     )
-    exhibitor: Mapped["Exhibitor"] = relationship(back_populates="company")
+    exhibitor: Mapped["Exhibitor"] = relationship(back_populates="companies")
     addresses: Mapped[List["Address"]] = relationship(
         back_populates="company",
         cascade="all, delete",
@@ -413,7 +398,6 @@ class Stall(db.Model):
     network: Mapped[bool] = mapped_column(default=False)
     support: Mapped[bool] = mapped_column(default=False)
     image: Mapped[str]
-    amount: Mapped[int]
     max_amount: Mapped[int]
 
     # mappings
@@ -430,25 +414,12 @@ class Stall(db.Model):
 
     def _validate(self):
         self.add_errors_or_skip("size", [va.min(self.size, 1)])
-        self.add_errors_or_skip("amount", [va.min(self.amount, 0)])
         self.add_errors_or_skip("hall_id", [va.min(self.hall_id, 1)])
         self.add_errors_or_skip("max_amount", [va.min(self.max_amount, 1)])
         self.add_errors_or_skip("image", [va.min_length(self.image, 1)])
 
     def __delete__(self):
         delete_file(self.image)
-
-
-class Notification(db.Model):
-    id: Mapped[intpk]
-    read: Mapped[bool] = mapped_column(default=False)
-    kind: Mapped["NotificationKind"]
-
-    # mappings
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("user.id", ondelete="CASCADE")
-    )
-    user: Mapped["User"] = relationship(back_populates="notifications")
 
 
 class FairProxy(db.Model):

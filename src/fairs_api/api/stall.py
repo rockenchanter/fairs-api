@@ -42,9 +42,7 @@ class StallListAPI(ListAPI):
         super().__init__(Stall, BASE_STMT, "administrator")
 
     def _create_params(self):
-        ret = stall_params()
-        ret["amount"] = ret["max_amount"]
-        return ret
+        return stall_params()
 
     def _after_commit(self):
         self._store_file("image", "image")

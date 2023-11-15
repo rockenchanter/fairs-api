@@ -10,14 +10,15 @@ from .api import ListAPI, API
 BASE_STMT = db.select(Fair).\
     outerjoin(Fair.organizer).\
     outerjoin(Fair.hall).\
+    outerjoin(Hall.stalls).\
     outerjoin(Fair.industries).\
     outerjoin(Fair.fair_proxies).\
     order_by(Fair.start).\
     options(
         db.contains_eager(Fair.organizer),
-        db.contains_eager(Fair.hall),
         db.contains_eager(Fair.industries),
-        db.contains_eager(Fair.fair_proxies)
+        db.contains_eager(Fair.fair_proxies),
+        db.contains_eager(Fair.hall).contains_eager(Hall.stalls)
     )
 
 
@@ -82,9 +83,12 @@ class FairAPI(API):
     def _modify_obj(self, obj):
         add_industries(obj)
 
+    def _before_patch(self, obj):
+        self.not_modifiable = obj.published
+
     def _validate(self, obj):
         obj_valid = super()._validate(obj)
-        if obj.published:
+        if self.not_modifiable:
             obj.add_error("generic", "not_modifiable")
             return False
         return obj_valid
@@ -98,6 +102,7 @@ class FairAPI(API):
         if not obj.published and \
                 obj.organizer_id != session.get("user_id", None):
             raise NotFound
+        return super()._before_get(obj)
 
 
 class FairListAPI(ListAPI):
@@ -112,13 +117,23 @@ class FairListAPI(ListAPI):
     def _after_commit(self):
         self._store_file("image", "image")
 
-    def _before_validate(self):
+    def _before_validate(self, obj):
         par = self._create_params()
         self.hall_available = hall_available(
             par["hall_id"],
             par["start"],
             par["end"]
         )
+
+    def _before_get(self, objs):
+        dset = []
+        for fair in objs:
+            serialized_item = fair.serialize()
+            serialized_item["hall"]["stalls"] = [
+                    s.serialize() for s in fair.hall.stalls
+            ]
+            dset.append(serialized_item)
+        return dset
 
     def _validate(self, obj):
         obj_valid = super()._validate(obj)

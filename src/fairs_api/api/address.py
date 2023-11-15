@@ -1,7 +1,7 @@
 from flask import session
 from werkzeug.exceptions import Forbidden
 
-from fairs_api.models import db, Address, get_company_id
+from fairs_api.models import db, Address
 from fairs_api import utils as ut
 from .api import API, ListAPI
 
@@ -15,7 +15,7 @@ def address_params():
         "zipcode": ut.get_str("zipcode"),
         "city": ut.get_str("city"),
         "street": ut.get_str("street"),
-        "company_id": get_company_id()
+        "company_id": ut.get_int("company_id", 0),
     }
 
 
@@ -26,9 +26,15 @@ class AddressAPI(API):
     def _create_params(self):
         return address_params()
 
+    def _update_params(self):
+        ret = self._create_params()
+        ret.pop("company_id")
+        return ret
+
     def _before_patch(self, obj):
         super()._before_patch(obj)
-        ut.check_ownership("exhibitor_id")
+        if obj.company.exhibitor_id != session.get("user_id", None):
+            raise Forbidden
 
     def _before_delete(self, obj):
         super()._before_delete(obj)
@@ -42,7 +48,6 @@ class AddressListAPI(ListAPI):
 
     def _before_post(self):
         super()._before_post()
-        ut.check_ownership("exhibitor_id")
 
     def _create_params(self):
         return address_params()

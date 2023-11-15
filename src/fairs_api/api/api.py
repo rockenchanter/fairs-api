@@ -38,14 +38,13 @@ class API(MethodView):
         pass
 
     def _before_get(self, obj):
-        pass
+        return obj.serialize()
 
     def get(self, id: int):
         stmt = self.base_stmt.filter(self.model.id == id)
         obj = db.session.scalar(stmt)
         if obj:
-            self._before_get(obj)
-            return obj.serialize(), 200
+            return self._before_get(obj), 200
         raise NotFound
 
     def patch(self, id: int):
@@ -60,6 +59,7 @@ class API(MethodView):
             db.session.add(obj)
             db.session.flush()
             ret = obj.serialize()
+            db.session.commit()
             return ret, 200
         errors = obj.localize_errors(session.get("locale", "en"))
         return {"errors": errors}, 422
@@ -101,8 +101,11 @@ class ListAPI(MethodView):
     def _validate(self, obj: db.Model) -> bool:
         return obj.is_valid()
 
-    def _before_validate(self):
+    def _before_validate(self, obj: db.Model):
         pass
+
+    def _before_get(self, objs: list):
+        return [obj.serialize() for obj in objs]
 
     def _modify_obj(self, obj):
         pass
@@ -113,16 +116,19 @@ class ListAPI(MethodView):
     def post(self):
         self._before_post()
         obj = self.model(**self._create_params())
-        self._before_validate()
+        self._before_validate(obj)
         self._modify_obj(obj)
         if self._validate(obj):
             try:
                 db.session.add(obj)
                 db.session.flush()
-                ret = obj.serialize()
                 db.session.commit()
                 self._after_commit()
-                return ret, 201
+                stmt = self.base_stmt.filter(self.model.id == obj.id)
+                obj = db.session.scalar(stmt)
+                if obj:
+                    return obj.serialize(), 201
+                raise NotFound
             except IntegrityError as e:
                 print(e)
                 self._on_integrity_error()
@@ -132,4 +138,4 @@ class ListAPI(MethodView):
     def get(self):
         stmt = self._parse_index_params()
         objs = db.session.scalars(stmt).unique().all()
-        return [obj.serialize() for obj in objs], 200
+        return self._before_get(objs), 200
