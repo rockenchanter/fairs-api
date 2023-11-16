@@ -5,7 +5,6 @@ import os
 from .models import db, Administrator, Hall, Stall, FairProxy, FairProxyStatus
 from .validations import get_from_locale
 from . import config
-from .seed import seed_db
 from .api import hall, address, image, stall, fair, company
 
 migrate = Migrate(db=db)
@@ -52,7 +51,7 @@ def create_root_user(app):
         db.session.commit()
 
 
-def create_app(mode="development"):
+def create_app(mode="production"):
     app = Flask(__name__, instance_relative_config=True)
 
     if mode == "development":
@@ -132,13 +131,8 @@ def create_app(mode="development"):
             for pxy in i.proxies:
                 if pxy.fair_id == fid:
                     available_slots -= 1
-                    print(f"REDUCTION TO: {available_slots}")
             obj["amount"] = available_slots
-            print(f"AFTER: {available_slots}")
             dset.append(obj)
 
         return dset, 200
-
-    # register click commands
-    app.cli.add_command(seed_db)
     return app

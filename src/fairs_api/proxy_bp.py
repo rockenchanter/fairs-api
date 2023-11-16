@@ -43,8 +43,6 @@ def index():
                 FairProxy.invitation)
     ret = []
     res = db.session.scalars(stmt).unique().all()
-    print(uid)
-    print(len(res))
     for x in res:
         val = x.serialize()
         val["fair"]["organizer"] = x.fair.organizer.serialize(False)
