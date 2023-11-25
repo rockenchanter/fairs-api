@@ -1,5 +1,7 @@
 from flask import Flask, session, request
 from flask_migrate import Migrate, upgrade
+from flask_session import Session
+from werkzeug.middleware.proxy_fix import ProxyFix
 import os
 
 from .models import db, Administrator, Hall, Stall, FairProxy, FairProxyStatus
@@ -51,8 +53,9 @@ def create_root_user(app):
         db.session.commit()
 
 
-def create_app(mode="production"):
+def create_app(mode="development"):
     app = Flask(__name__, instance_relative_config=True)
+
 
     if mode == "development":
         app.config.from_object(config.DevelopmentConfig(app))
@@ -66,7 +69,12 @@ def create_app(mode="production"):
     elif mode == "test":
         app.config.from_object(config.TestConfig(app))
     else:
+        # On production we're running behind proxy
         app.config.from_object(config.ProductionConfig())
+        app.wsgi_app = ProxyFix(
+            app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1
+        )
+        Session(app)
 
     # create instance folder
     try:
@@ -122,7 +130,7 @@ def create_app(mode="production"):
     def get_stalls():
         stmt = db.select(Stall).outerjoin(Stall.proxies).outerjoin(FairProxy.fair).\
                 filter(Stall.hall_id == request.args.get("hall_id", 0))
-        data = db.session.scalars(stmt).all()
+        data = db.session.scalars(stmt).unique().all()
         dset = []
         fid = int(request.args.get("fair_id", 0))
         for i in data:

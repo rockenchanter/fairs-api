@@ -98,12 +98,6 @@ class FairAPI(API):
         if obj.organizer_id != session.get("user_id", None):
             raise Forbidden
 
-    def _before_get(self, obj):
-        if not obj.published and \
-                obj.organizer_id != session.get("user_id", None):
-            raise NotFound
-        return super()._before_get(obj)
-
 
 class FairListAPI(ListAPI):
     def __init__(self):

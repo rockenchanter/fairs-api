@@ -3,7 +3,7 @@ from flask import Blueprint, session, request
 from werkzeug.exceptions import NotFound, Forbidden
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import contains_eager
-from .models import FairProxy, FairProxyStatus, Stall, Fair, Company, db
+from .models import FairProxy, FairProxyStatus, Stall, Fair, Company, Hall, db
 from . import utils as ut
 
 _base_select = db.select(FairProxy).\
@@ -32,6 +32,10 @@ def index():
     stmt = _base_select
     if not role:
         raise Forbidden
+    elif fid := request.args.get("fair_id", None):
+        stmt = stmt.filter(FairProxy.fair_id == fid)
+    elif cid := request.args.get("company_id", None):
+        stmt = stmt.filter(FairProxy.company_id == cid)
     elif role == "organizer":
         stmt = stmt.filter(
                 FairProxy.status == FairProxyStatus.SENT,
@@ -39,6 +43,7 @@ def index():
                 Fair.organizer_id == uid)
     else:
         stmt = stmt.filter(
+                FairProxy.status == FairProxyStatus.SENT,
                 Company.exhibitor_id == uid,
                 FairProxy.invitation)
     ret = []
@@ -55,17 +60,30 @@ def index():
 def new():
     ut.check_role(["exhibitor", "organizer"])
     obj = FairProxy(**proxy_params())
+    stmt = db.select(Hall).join(Hall.fairs).join(Hall.stalls).filter(
+            Fair.id == obj.fair_id, Hall.id == Fair.hall_id).options(
+                db.contains_eager(Hall.stalls),
+                db.contains_eager(Hall.fairs)
+            )
+    hall = db.session.scalar(stmt)
+    invites = db.session.scalars(db.select(FairProxy).filter(
+        FairProxy.fair_id == obj.fair_id)).all()
     obj.status = FairProxyStatus.SENT
     obj.invitation = session["user_role"] == "organizer"
-    if obj.is_valid():
+
+    has_slots = hall.slots - len(invites) > 0
+    if obj.is_valid() and has_slots:
         db.session.add(obj)
         try:
             db.session.flush()
             dt = obj.serialize(False)
             db.session.commit()
-            return {"invitation": dt}, 201
+            return dt, 201
         except IntegrityError:
             obj.add_error("invitation", "invitation_exists")
+
+    if not has_slots:
+        obj.add_error("invitation", "max_invitations")
     errors = obj.localize_errors(session["locale"])
     return {"errors": errors}, 422
 
@@ -76,7 +94,9 @@ def update():
     cid = ut.get_int("company_id", 0)
     fid = ut.get_int("fair_id", 0)
     uid = int(session["user_id"])
+    sid = ut.get_int("stall_id", 0)
     urole = session.get("user_role")
+
 
     obj = db.session.scalar(_base_select.filter(
         FairProxy.company_id == cid), FairProxy.fair_id == fid)
@@ -85,7 +105,17 @@ def update():
         obj.status = FairProxyStatus.ACCEPTED if ut.get_int(
             "decision", 0) else FairProxyStatus.REJECTED
         if obj.status == FairProxyStatus.ACCEPTED and urole == "exhibitor":
-            stall = db.session.get(Stall, ut.get_int("stall_id", 0))
+            stmt = db.select(Stall).outerjoin(FairProxy).filter(
+                    Stall.id == sid).options(db.contains_eager(Stall.proxies))
+            stall = db.session.scalar(stmt)
+            invites = 0
+            for fp in stall.proxies:
+                if fp.fair_id == fid:
+                    invites += 1
+            if stall.max_amount - invites <= 0:
+                obj.add_error("invitation", "stall_unavailable")
+                errors = obj.localize_errors(session.get("locale", "en"))
+                return {"errors": errors}, 422
             obj.stall_id = stall.id
         db.session.commit()
         return {}, 200

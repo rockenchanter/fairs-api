@@ -261,6 +261,13 @@ class Hall(DescribableMixin, db.Model):
     street: Mapped[str]
     zipcode: Mapped[str]
 
+    @property
+    def slots(self):
+        amt = 0
+        for stall in self.stalls:
+            amt += stall.max_amount
+        return amt
+
     # mappings
     fairs: Mapped[List["Fair"]] = relationship(
         back_populates="hall",

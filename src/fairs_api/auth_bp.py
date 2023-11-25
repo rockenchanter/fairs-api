@@ -29,6 +29,7 @@ def login_params():
 
 def register_params():
     return {
+        "image": get_filename("image")[1],
         "name": request.form.get("name", None),
         "surname": request.form.get("surname", None),
         "email": request.form.get("email", None),
@@ -85,10 +86,6 @@ def register():
     else:
         user = md.Organizer(**params)
 
-    if request.files["image"]:
-        user.image = get_filename(request.files["image"])[1]
-    else:
-        user.image = ""
     if user.is_valid():
         user.make_password_hash()
         try:
@@ -98,7 +95,7 @@ def register():
             user.add_errors_or_skip("email", [["email_taken"]])
             db.session.rollback()
         else:
-            store_file(request.files["image"], "image")
+            store_file("image", "image")
             save_user_in_session(user)
             return {"user": user.serialize(False)}, 201
     errors = user.localize_errors(session["locale"])

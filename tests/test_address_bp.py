@@ -10,7 +10,6 @@ pytestmark = pytest.mark.usefixtures(
 
 def test_create(auth, client, create_user, address_params):
     data = create_user({"role": "exhibitor"})
-    print(data)
     auth.login(data["email"], data["password"])
     dt = address_params.copy()
     dt["company_id"] = 1

@@ -20,7 +20,9 @@
         "hall_unavailable": "Hall in unavailable at specified date",
         "invitation_exists": "Invitation has been sent already",
         "stall_unavailable": "Specified stall is unavailable",
-        "not_modifiable": "Resource can not be modified"
+        "not_modifiable": "Resource can not be modified",
+        "contains_digit": "Must contain at least one digit",
+        "max_invitations": "Can not send more invitations"
     },
 
     "pl": {
@@ -44,6 +46,8 @@
         "hall_unavailable": "Hala niedostępna w wybranym przedziale czasowym",
         "invitation_exists": "Zaproszenie zostało już wysłane",
         "stall_unavailable": "Wybrane stoisko jest niedostępne",
-        "not_modifiable": "Nie można edytować tego zasobu"
+        "not_modifiable": "Nie można edytować tego zasobu",
+        "contains_digit": "Musi zawierać co najmniej 1 cyfrę",
+        "max_invitations": "Nie można wysłać więcej zaproszeń"
     }
 }
