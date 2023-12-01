@@ -5,7 +5,7 @@ from sqlalchemy import event, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship, DeclarativeBase
 from sqlalchemy.ext.associationproxy import association_proxy, AssociationProxy
 from sqlalchemy import func, Column, ForeignKey
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask import session
 import datetime
 import enum
@@ -155,6 +155,19 @@ class User(db.Model):
 
     def make_password_hash(self):
         self.password = generate_password_hash(self.password)
+
+    def can_change_password(self, oldPass, newPass, passConf) -> bool:
+        old_password = self.password
+        self.password = newPass
+        validation_res = self.is_valid()
+        if newPass != passConf:
+            self.add_error("password_confirmation", "password_not_match")
+        if not check_password_hash(old_password, oldPass):
+            self.add_error("old_password", "invalid_password")
+        elif validation_res:
+            self.make_password_hash()
+            return True
+        return False
 
     def _validate(self) -> bool:
         self.add_errors_or_skip("name", [va.min_length(self.name, 1)])

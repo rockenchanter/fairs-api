@@ -1,10 +1,10 @@
 from flask import Blueprint, session, request
-from werkzeug.exceptions import Unauthorized
+from werkzeug.exceptions import Unauthorized, Forbidden
 from werkzeug.security import check_password_hash
 from sqlalchemy.exc import IntegrityError
 
 from . import models as md
-from .utils import store_file, get_filename
+from . import utils as ut
 from .models import db
 
 bp = Blueprint("auth", __name__)
@@ -29,13 +29,44 @@ def login_params():
 
 def register_params():
     return {
-        "image": get_filename("image")[1],
+        "image": ut.get_filename("image")[1],
         "name": request.form.get("name", None),
         "surname": request.form.get("surname", None),
         "email": request.form.get("email", None),
         "role": request.form.get("role", None),
         "password": request.form.get("password", None),
     }
+
+
+def password_params():
+    return {
+        "old": ut.get_str("old_password"),
+        "password": ut.get_str("password"),
+        "password_conf": ut.get_str("password_confirmation"),
+    }
+
+
+@bp.post("/changePassword")
+def change_password():
+    errors = {}
+    if uid := session.get("user_id", None):
+        params = password_params()
+        user = db.session.get(md.User, int(uid))
+        if not user:
+            errors["generic"] = "User does not exist"
+        elif user.can_change_password(
+                params["old"],
+                params["password"],
+                params["password_conf"]):
+            db.session.commit()
+            return {}, 200
+        else:
+            usr_errors = user.localize_errors()
+            errors.update(usr_errors)
+    else:
+        raise Forbidden
+    print(errors)
+    return {"errors": errors}, 422
 
 
 @bp.post("/login")
@@ -95,7 +126,7 @@ def register():
             user.add_errors_or_skip("email", [["email_taken"]])
             db.session.rollback()
         else:
-            store_file("image", "image")
+            ut.store_file("image", "image")
             save_user_in_session(user)
             return {"user": user.serialize(False)}, 201
     errors = user.localize_errors(session["locale"])

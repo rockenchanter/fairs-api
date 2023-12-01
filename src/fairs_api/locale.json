@@ -22,7 +22,9 @@
         "stall_unavailable": "Specified stall is unavailable",
         "not_modifiable": "Resource can not be modified",
         "contains_digit": "Must contain at least one digit",
-        "max_invitations": "Can not send more invitations"
+        "max_invitations": "Can not send more invitations",
+        "password_not_match": "Passwords do not match",
+        "invalid_password": "Invalid password"
     },
 
     "pl": {
@@ -48,6 +50,8 @@
         "stall_unavailable": "Wybrane stoisko jest niedostępne",
         "not_modifiable": "Nie można edytować tego zasobu",
         "contains_digit": "Musi zawierać co najmniej 1 cyfrę",
-        "max_invitations": "Nie można wysłać więcej zaproszeń"
+        "max_invitations": "Nie można wysłać więcej zaproszeń",
+        "password_not_match": "Hasła nie pasują do siebie",
+        "invalid_password": "Nieprawidłowe hasło"
     }
 }
