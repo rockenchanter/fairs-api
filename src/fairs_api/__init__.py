@@ -5,6 +5,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 import os
 
 from .models import db, Administrator, Hall, Stall, FairProxy, FairProxyStatus
+from .seed import seed
 from .validations import get_from_locale
 from . import config
 from .api import hall, address, image, stall, fair, company
@@ -53,7 +54,7 @@ def create_root_user(app):
         db.session.commit()
 
 
-def create_app(mode="development"):
+def create_app(mode="production"):
     app = Flask(__name__, instance_relative_config=True)
 
 
@@ -118,6 +119,8 @@ def create_app(mode="development"):
     register_api(app, stall.StallAPI, stall.StallListAPI, "stalls")
     register_api(app, fair.FairAPI, fair.FairListAPI, "fairs")
     register_api(app, company.CompanyAPI, company.CompanyListAPI, "companies")
+
+    app.cli.add_command(seed)
 
     # additional routes
     @app.get("/halls/cities")
