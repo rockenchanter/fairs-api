@@ -159,6 +159,10 @@ class FairListAPI(ListAPI):
                 FairProxy.company_id == cid,
                 FairProxy.status == FairProxyStatus.ACCEPTED
             ))
+        if cind := request.args.get("industry", None):
+            fd = cind.split(",")
+            industries_ids = [int(x.strip()) for x in fd]
+            select = select.filter(Industry.id.in_(industries_ids))
         s = request.args.get("start", None)
         if s:
             select = select.filter(Fair.start >= s)

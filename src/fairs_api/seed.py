@@ -14,7 +14,6 @@ def create_user(role, name, surname, num):
         usr = md.Organizer(email=f"{name.lower()}@email.com", password=f"{name}1234",
                            image=f"/assets/organizer_{num}.jpg", name=name,
                            surname=surname)
-    print(f"email: {usr.email}, password: {usr.password}")
     usr.make_password_hash()
     return usr
 
